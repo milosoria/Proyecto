@@ -28,7 +28,6 @@
 ### Tabla de Paginas:
 Informacion para traducir direcciones virtuales a fisicas dentro de la memoria. Las direcciones fisicas seran relativas al ultimo 1 GB de la memoria:
 
-    '''
     2^12 + 2^4 + dir (|tabla de PCB| + |Frame bitmap| + dir)
-    '''
+
 - Valid (1 Byte): 0x01
