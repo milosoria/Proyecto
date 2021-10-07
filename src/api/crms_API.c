@@ -110,15 +110,17 @@ void cr_ls_files(int process_id){
             for (int j=0; j < PROCESS_N_FILES_ENTRIES; j++){
                 // nos saltamos el byte de validez
                 fseek(memory,1,SEEK_CUR);
+
                 // leemos el nombre del archivo del primer archivo
                 fread(process_file,NAMES_SIZE,1,memory); 
                 printf("\tFile with name %s\n", process_file);
-                // dejamos el puntero en la siguiente 
+
+                // dejamos el puntero en la siguiente entrada
                 fseek(memory,PROCESS_FILE_SIZE+VIRTUAL_ADRESS_SIZE,SEEK_CUR); 
             }
 
             fclose(memory);
-
+            return;
         } else {
             fseek(memory, PROCESS_N_FILES_ENTRIES * PROCESS_FILE_SIZE, SEEK_CUR);
         }

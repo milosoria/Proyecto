@@ -64,7 +64,7 @@ Implementacion de funciones para manipular archivos de procesos:
 
 - [X] int cr_exists(int process_id, char \* file_name): Funcion para ver si un archivo con nombre file_name existe en la memoria del proceso con id process_id. Retorna 1 si existe || 0 si no.
 
-- [ ] void cr_ls_files(int process_id): Funcion para listar los archivos dentro de la memoria el proceso. Imprime los nombres de todos los archivos presentes en la memoria del proceso con id process_id. 
+- [X] void cr_ls_files(int process_id): Funcion para listar los archivos dentro de la memoria el proceso. Imprime los nombres de todos los archivos presentes en la memoria del proceso con id process_id. 
 
 ### Funciones Procesos:
 
@@ -73,6 +73,7 @@ Implementacion de funciones para manipular archivos de procesos:
 - [ ] void cr_finish_process(int process_id): Funcion para terminar un proceso con id process_id. Es importante que antes de que el proceso termine se debe liberar toda la memoria asignada y no debe tener entrada valida en la tabla de PCB.
 
 ### Funciones Archivos:
+
 - [ ] CrmsFile\* cr_open(int process_id, char\* file_name, char mode): Funcion para abrir un archivo perteneciente a prcess_id. Si mode es 'r', busca el archivo con nombre file_name y retorna CrmsFile\* que los representa. Si mode es 'w', se verifica que el archivo no exista y se retornaun nuevo CrmsFile\* que lo representa.
 
 - [ ] int cr_write_file(CrmsFile\* file_desc, void \* buffer, int n_bytes): Funcion para escribir archivos. Escribe en el archivo representado por file_desc los n_bytes que se encuentran en la direccion indicada por buffer y retorna la cantidad de Bytes escritos en el archivo (en caso de no terminar). La escritura comienza desde el primer espacio libre (IMPORTANTE) dentro de la memoria virtual. La escritura termina cuando:
@@ -82,7 +83,9 @@ Implementacion de funciones para manipular archivos de procesos:
     - Se escribieron los n_bytes
 
 - [ ] int cr_read( CrmsFile \* file_desc, void\* buffer, int n_bytes): Funcion para leer archivos. Lee los siguientes n_bytes desde el archivo representado por file_desc y los gurda en la direccion aputnada por buffer. Debe retornar la cantidad de Bytes que efectivamente leyo. La lectura se efectua recorriendo los frames donde se encuentra escrito su contenido, comenzando desde la ultima posicion leida por un llamado cr_read. (Variable global?)
+
 - [ ] void cr_delete(CrmsFile \* file_desc): Funcion para liberar memoria de un archivo perteneciente a un proceso con id process_id. Para esto el archivo debe dejar de aparecer en la memoria virtual del proceso, ademas, si los frames quedan totalmente libres se debe indicar en el frame bitmap que ese frame ya no esta siendo utilizado e invalidar la entrada en la PCB.
+
 - [ ] void cr_close(CrmsFile\* file_desc): Funcion para cerrar archivo. Cierra el archivo indicado por file_desc.
 
 ## Manejo de bits:
