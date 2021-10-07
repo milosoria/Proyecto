@@ -1,5 +1,7 @@
 #include "crms_API.h"
 #include <stdlib.h>
+// esta bien hacerlo asi?
+extern char * MEMORY_PATH;
 
 // Funciones para manejar struct
 CrmsFile * init_crms_file(u_int64_t dir, FILE* file_ptr,int last_pos, int size){
@@ -9,6 +11,7 @@ CrmsFile * init_crms_file(u_int64_t dir, FILE* file_ptr,int last_pos, int size){
     crms -> last_pos = last_pos;
     // para usar fseek
     crms -> n_bytes = size;
+
     return crms;
 }
 
@@ -18,11 +21,15 @@ void destroy_crms_file(CrmsFile* file){
 }
 // Funciones Generales
 void cr_mount(char * memory_path){
-    return;
+    MEMORY_PATH = memory_path;
 }
 
 void cr_ls_processes(){
-    return;
+    // recorrer pcb y revisar si tiene state 0x01 0 0x00 e imprime el nombre del proceso y su id
+    FILE * memory = fopen(MEMORY_PATH, "r+b");
+    /* for (int i=0; i < */ 
+    /* printf("[%s] Process: %s executing\n", process[i]); */
+    /* return; */
 }
 
 int cr_exists(int process_id, char * file_name){}

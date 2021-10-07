@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <sys/types.h>
+#include "../memory/sizes.h"
 
 typedef struct crmsfile {
     // direccion dentro de la memoria
