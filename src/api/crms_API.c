@@ -39,11 +39,11 @@ void cr_ls_processes(){
         fread(process_name,NAMES_SIZE,1,memory); 
 
         // avanzamos hacia el siguiente proceso
-        fseek(memory,PROCESS_SIZE - PROCESS_ID_SIZE-PROCESS_STATE_SIZE-NAMES_SIZE,SEEK_CUR);
+        fseek(memory,PROCESS_N_FILES_ENTRIES*PROCESS_FILE_SIZE + PAGE_TABLE_SIZE,SEEK_CUR);
 
         // si esta en ejecucion, entonces lo imprimimos
         if (strcmp(process_state, "0x01")){
-            printf("[%s] Process: %s executing\n", process_id,process_name);
+            printf("[PID:%s] Process: %s executing\n", process_id,process_name);
         }
     }
 
@@ -57,22 +57,32 @@ int cr_exists(int process_id, char * file_name){
     FILE * memory = fopen(MEMORY_PATH, "r+b");
     char process_file[PROCESS_FILE_ENTRY_SIZE];
     char process_id_buff[PROCESS_ID_SIZE];
-    // 12 bytes
-    char file_name_buff[NAMES_SIZE];
 
     for (int i=0; i < PCB_N_ENTRIES; i++){
+
         fseek(memory,PROCESS_STATE_SIZE,SEEK_CUR);
         fread(process_id_buff, PROCESS_ID_SIZE,1,memory);
         fseek(memory,NAMES_SIZE,SEEK_CUR);
+
         if ((int) process_id_buff[0] == process_id){
             for (int j=0; j < PROCESS_N_FILES_ENTRIES; j++){
-                fread(process_file,PROCESS_FILE_ENTRY_SIZE,1,memory); 
+                // nos saltamos el byte de validez
+                fseek(memory,1,SEEK_CUR);
+                // leemos el nombre del archivo del primer archivo
+                fread(process_file,NAMES_SIZE,1,memory); 
                 if (strcmp(process_file,file_name)){
+                    fclose(memory);
                     return 1;
                 }
+                // dejamos el puntero al comienzo de la siguiente entrada de archivos
+                fseek(memory,PROCESS_FILE_SIZE+VIRTUAL_ADRESS_SIZE,SEEK_CUR); 
             }
+
             fclose(memory);
             return 0;
+
+        } else {
+            fseek(memory, PROCESS_N_FILES_ENTRIES * PROCESS_FILE_SIZE, SEEK_CUR);
         }
         // El puntero queda al comienzo de la tabla de paginas
         fseek(memory,PAGE_TABLE_SIZE,SEEK_CUR);
@@ -84,28 +94,40 @@ int cr_exists(int process_id, char * file_name){
 }
 
 void cr_ls_files(int process_id){
-    /* // Comprobar si en la PCB el proceso tiene al archivo file_name */
-    /* FILE * memory = fopen(MEMORY_PATH, "r+b"); */
-    /* char process_file[PROCESS_FILE_ENTRY_SIZE]; */
-    /* // 12 bytes */
-    /* char file_name_buff[NAMES_SIZE]; */
+    // Comprobar si en la PCB el proceso tiene al archivo file_name
+    FILE * memory = fopen(MEMORY_PATH, "r+b");
+    char process_file[PROCESS_FILE_ENTRY_SIZE];
+    char process_id_buff[PROCESS_ID_SIZE];
 
-    /* for (int i=0; i < PCB_N_ENTRIES; i++){ */
-    /*     fseek(memory,PROCESS_SIZE - PROCESS_ID_SIZE - PROCESS_STATE_SIZE - NAMES_SIZE,SEEK_CUR); */
-    /*     for (int j=0; j < PROCESS_N_FILES_ENTRIES; j++){ */
-    /*         fread(process_file,PROCESS_FILE_ENTRY_SIZE,1,memory); */ 
-    /*         if (strcmp(process_file,file_name)){ */
-    /*             return 1; */
-    /*         } */
-    /*     } */
-    /*     // El puntero queda al comienzo de la tabla de paginas */
-    /*     fseek(memory,PAGE_TABLE_SIZE,SEEK_CUR); */
-    /*     // lo dejamos al comienzo de la siguiente entrada de la PCB */
-    /* } */
+    for (int i=0; i < PCB_N_ENTRIES; i++){
 
-    /* fclose(memory); */
-    /* return 0; */
+        fseek(memory,PROCESS_STATE_SIZE,SEEK_CUR);
+        fread(process_id_buff, PROCESS_ID_SIZE,1,memory);
+        fseek(memory,NAMES_SIZE,SEEK_CUR);
+
+        if ((int) process_id_buff[0] == process_id){
+            printf("[PID:%s] Process with the following files:\n", process_id_buff);
+            for (int j=0; j < PROCESS_N_FILES_ENTRIES; j++){
+                // nos saltamos el byte de validez
+                fseek(memory,1,SEEK_CUR);
+                // leemos el nombre del archivo del primer archivo
+                fread(process_file,NAMES_SIZE,1,memory); 
+                printf("\tFile with name %s\n", process_file);
+                // dejamos el puntero en la siguiente 
+                fseek(memory,PROCESS_FILE_SIZE+VIRTUAL_ADRESS_SIZE,SEEK_CUR); 
+            }
+
+            fclose(memory);
+
+        } else {
+            fseek(memory, PROCESS_N_FILES_ENTRIES * PROCESS_FILE_SIZE, SEEK_CUR);
+        }
+
+        fseek(memory,PAGE_TABLE_SIZE,SEEK_CUR);
+
+    }
 }
+
 // Funciones Procesos
 
 void cr_start_process(int process_id , char * process_name){
