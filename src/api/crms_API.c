@@ -56,16 +56,23 @@ int cr_exists(int process_id, char * file_name){
     // Comprobar si en la PCB el proceso tiene al archivo file_name
     FILE * memory = fopen(MEMORY_PATH, "r+b");
     char process_file[PROCESS_FILE_ENTRY_SIZE];
+    char process_id_buff[PROCESS_ID_SIZE];
     // 12 bytes
     char file_name_buff[NAMES_SIZE];
 
     for (int i=0; i < PCB_N_ENTRIES; i++){
-        fseek(memory,PROCESS_SIZE - PROCESS_ID_SIZE - PROCESS_STATE_SIZE - NAMES_SIZE,SEEK_CUR);
-        for (int j=0; j < PROCESS_N_FILES_ENTRIES; j++){
-            fread(process_file,PROCESS_FILE_ENTRY_SIZE,1,memory); 
-            if (strcmp(process_file,file_name)){
-                return 1;
+        fseek(memory,PROCESS_STATE_SIZE,SEEK_CUR);
+        fread(process_id_buff, PROCESS_ID_SIZE,1,memory);
+        fseek(memory,NAMES_SIZE,SEEK_CUR);
+        if ((int) process_id_buff[0] == process_id){
+            for (int j=0; j < PROCESS_N_FILES_ENTRIES; j++){
+                fread(process_file,PROCESS_FILE_ENTRY_SIZE,1,memory); 
+                if (strcmp(process_file,file_name)){
+                    return 1;
+                }
             }
+            fclose(memory);
+            return 0;
         }
         // El puntero queda al comienzo de la tabla de paginas
         fseek(memory,PAGE_TABLE_SIZE,SEEK_CUR);
@@ -76,6 +83,29 @@ int cr_exists(int process_id, char * file_name){
     return 0;
 }
 
+void cr_ls_files(int process_id){
+    /* // Comprobar si en la PCB el proceso tiene al archivo file_name */
+    /* FILE * memory = fopen(MEMORY_PATH, "r+b"); */
+    /* char process_file[PROCESS_FILE_ENTRY_SIZE]; */
+    /* // 12 bytes */
+    /* char file_name_buff[NAMES_SIZE]; */
+
+    /* for (int i=0; i < PCB_N_ENTRIES; i++){ */
+    /*     fseek(memory,PROCESS_SIZE - PROCESS_ID_SIZE - PROCESS_STATE_SIZE - NAMES_SIZE,SEEK_CUR); */
+    /*     for (int j=0; j < PROCESS_N_FILES_ENTRIES; j++){ */
+    /*         fread(process_file,PROCESS_FILE_ENTRY_SIZE,1,memory); */ 
+    /*         if (strcmp(process_file,file_name)){ */
+    /*             return 1; */
+    /*         } */
+    /*     } */
+    /*     // El puntero queda al comienzo de la tabla de paginas */
+    /*     fseek(memory,PAGE_TABLE_SIZE,SEEK_CUR); */
+    /*     // lo dejamos al comienzo de la siguiente entrada de la PCB */
+    /* } */
+
+    /* fclose(memory); */
+    /* return 0; */
+}
 // Funciones Procesos
 
 void cr_start_process(int process_id , char * process_name){

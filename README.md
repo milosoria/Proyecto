@@ -58,11 +58,11 @@ Implementacion de funciones para manipular archivos de procesos:
 
 ### Funciones Generales:
 
-- [ ] void cr_mount(char \* memory_path): Funcion para montar memoria. Establece como variable global la ruta local donde se encuentra el archivo .bin correspondiente a la memoria
+- [X] void cr_mount(char \* memory_path): Funcion para montar memoria. Establece como variable global la ruta local donde se encuentra el archivo .bin correspondiente a la memoria
 
-- [ ] void cr_ls_processes(): Funcion que muestra en pantalla los procesos en ejecucion
+- [X] void cr_ls_processes(): Funcion que muestra en pantalla los procesos en ejecucion
 
-- [ ] int cr_exists(int process_id, char \* file_name): Funcion para ver si un archivo con nombre file_name existe en la memoria del proceso con id process_id. Retorna 1 si existe || 0 si no.
+- [X] int cr_exists(int process_id, char \* file_name): Funcion para ver si un archivo con nombre file_name existe en la memoria del proceso con id process_id. Retorna 1 si existe || 0 si no.
 
 - [ ] voir cr_ls_files(int process_id): Funcion para listar los archivos dentro de la memoria el proceso. Imprime los nombres de todos los archibos presentes en la mmeoria del proceso con id process_id. 
 
