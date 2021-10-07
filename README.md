@@ -10,9 +10,10 @@
         * Size: 8MB
         * PFN: Cada frame posee un numero de 7 bits (unsigned int)
         * #frames = 128 
+
 ### Tabla de PCB:
 
-- Size: 256 bytes
+- Size de cada entrada: 256 bytes
 - Numero de entradas: 16
 - State(1 Byte): 0x01 || 0x00 (ejecutando o no)
 - 1 Byte para el PID
@@ -22,7 +23,7 @@
     * FileName (12 Bytes)
     * FileSize (4 Bytes): el max es 32 MB
     * VirtualAdress (4 Bytes): 4 bits no significativos (0b0000) + 5 bits VPN + 23 bits offset
-- Por ultimo: Tabla de Paginas (32 Bytes)
+- Por ultimo: Tabla de Paginas (32 Bytes), 1 Byte y 32 entradas
 
 ### Tabla de Paginas:
 
@@ -43,7 +44,6 @@ Informacion para traducir direcciones virtuales a fisicas dentro de la memoria. 
 Refleja el estado de la memoria fisica y se encuentra a continuacion de la PCB:
 - Size: 16 Bytes = 128 bit
 - Cada bit del frame bitmap indica si el frame correspondiente esta libre (0) o no (1)
-
 
 ### Frame:
 
