@@ -74,7 +74,7 @@ Implementacion de funciones para manipular archivos de procesos:
 
 ### Funciones Archivos:
 
-- [ ] CrmsFile\* cr_open(int process_id, char\* file_name, char mode): Funcion para abrir un archivo perteneciente a prcess_id. Si mode es 'r', busca el archivo con nombre file_name y retorna CrmsFile\* que los representa. Si mode es 'w', se verifica que el archivo no exista y se retornaun nuevo CrmsFile\* que lo representa.
+- [ ] CrmsFile\* cr_open(int process_id, char\* file_name, char mode): Funcion para abrir un archivo perteneciente a process_id. Si mode es 'r', busca el archivo con nombre file_name y retorna CrmsFile\* que los representa. Si mode es 'w', se verifica que el archivo no exista y se retorna un nuevo CrmsFile\* que lo representa.
 
 - [ ] int cr_write_file(CrmsFile\* file_desc, void \* buffer, int n_bytes): Funcion para escribir archivos. Escribe en el archivo representado por file_desc los n_bytes que se encuentran en la direccion indicada por buffer y retorna la cantidad de Bytes escritos en el archivo (en caso de no terminar). La escritura comienza desde el primer espacio libre (IMPORTANTE) dentro de la memoria virtual. La escritura termina cuando:
 

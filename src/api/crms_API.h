@@ -1,7 +1,8 @@
 #include <stdio.h>
 #include <sys/types.h>
-#include "../memory/sizes.h"
+#include "../crms/sizes.h"
 
+//TODO: son estos atributos necesarios???
 typedef struct crmsfile {
     // direccion dentro de la memoria
     u_int64_t  file_dir;
@@ -9,14 +10,13 @@ typedef struct crmsfile {
     FILE * file_ptr;
     // ultima posicion leida por cr_read o offset desde donde comenzar a leer
     int last_pos;
+    int process_id;
     // size del archivo
     int n_bytes;
 } CrmsFile;
 
 // Funciones para manejar struct
-CrmsFile * init_crms_file(u_int64_t dir, FILE* file_ptr,int last_pos, int size);
-
-void destroy_crms_file(CrmsFile* file);
+CrmsFile * init_crms_file(u_int64_t dir,int process_id, FILE* file_ptr,int last_pos, int size);
 
 // Funciones Generales
 void cr_mount(char * memory_path);

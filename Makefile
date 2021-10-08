@@ -48,7 +48,7 @@ LIB=$(GTK) $(MTH)
 COMMON=api
 
 # Directorios que serán compilados a un programa
-PROGRAMS=memory
+PROGRAMS=crms
 
 # Todos los directorios que contienen archivos de código
 SRCDIR=$(COMMON) $(PROGRAMS)

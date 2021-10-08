@@ -3,11 +3,16 @@
 #include <string.h>
 
 // esta bien hacerlo asi?
-extern char * MEMORY_PATH;
+char * MEMORY_PATH;
 
 // Funciones para manejar struct
-CrmsFile * init_crms_file(u_int64_t dir, FILE* file_ptr,int last_pos, int size){
+CrmsFile * init_crms_file(u_int64_t dir,int process_id, FILE* file_ptr,int last_pos, int size){
+/* crmsfile representa un archivo */
+/* si miras la función cr_open, esta recibe el id del proceso, el nombre del archivo y el modo */
+/* lo que te retorna es la representación de un archivo asociado a un proceso y la gracia de esta representación es que tenga
+ * toda la información que estimes necesaria para que el resto de las funciones de la API que lo recibirán como argumento puedan funcionar bien */
     CrmsFile * crms = malloc(sizeof(CrmsFile));
+    crms -> process_id = process_id;
     crms -> file_dir = dir;
     crms -> file_ptr = file_ptr;
     crms -> last_pos = last_pos;
@@ -21,6 +26,7 @@ void destroy_crms_file(CrmsFile* file){
     fclose(file->file_ptr);
     free(file);
 }
+
 // Funciones Generales
 void cr_mount(char * memory_path){
     MEMORY_PATH = memory_path;
@@ -38,13 +44,13 @@ void cr_ls_processes(){
         fread(process_id,PROCESS_ID_SIZE,1,memory); 
         fread(process_name,NAMES_SIZE,1,memory); 
 
+        // si esta en ejecucion, entonces lo imprimimos
+        /* if (strcmp(process_state, "0x01")){ */
+            printf("[PID:%s] Process: %s executing\n", process_id,process_name);
+        /* } */
+
         // avanzamos hacia el siguiente proceso
         fseek(memory,PROCESS_N_FILES_ENTRIES*PROCESS_FILE_SIZE + PAGE_TABLE_SIZE,SEEK_CUR);
-
-        // si esta en ejecucion, entonces lo imprimimos
-        if (strcmp(process_state, "0x01")){
-            printf("[PID:%s] Process: %s executing\n", process_id,process_name);
-        }
     }
 
     fclose(memory);
@@ -132,7 +138,7 @@ void cr_ls_files(int process_id){
 
 // Funciones Procesos
 
-void cr_start_process(int process_id , char * process_name){
+void cr_start_process(int process_id, char * process_name){
     return;
 }
 
@@ -142,7 +148,20 @@ void cr_finish_process(int process_id){
 
 // Funciones Archivos
 CrmsFile* cr_open(int process_id, char* file_name, char mode){
+    if (mode == 'r'){
+        return NULL;
+    } else {
+        int exists = cr_exists(process_id, file_name);
+        return NULL;
+    }
 }
+
+/* 1.Lees de entrada en entrada del proceso (mediante el uso de fseek y fread) */
+/* 2.Una vez encuentras el proceso buscas entrada por entrada el archivo que estas buscando (de nuevo, fseek y fread) */
+/* 3.Una vez encuentras el archivo mediante el VPN y el tamaño del archivo sabes exactamente que paginas usa el archivo */
+/* 5.Lees pagina por pagina del archivo */
+/* 6.Por cada pagina perteneciente al archivo con el PFN obtienes exactamente el frame y al que pertenece la pagina. */
+/* 7.Entre el VPN, y el PFN de cada pagina sabes cuales frames leer y cuanto leer. */
 
 int cr_write_file(CrmsFile* file_desc, void * buffer, int n_bytes){}
 

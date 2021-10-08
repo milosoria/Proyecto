@@ -1,2 +1,4 @@
-memfilled.bin
-memformat.bin
+**
+!src/
+!Makefile
+!*.md
