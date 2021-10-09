@@ -1,16 +1,21 @@
 #include "crms_API.h"
+#include <inttypes.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <arpa/inet.h>
+#include <byteswap.h>
+#include <sys/types.h>
 
 // esta bien hacerlo asi?
 char * MEMORY_PATH;
 
 // Funciones para manejar struct
 CrmsFile * init_crms_file(u_int64_t dir,int process_id, FILE* file_ptr,int last_pos, int size){
-/* crmsfile representa un archivo */
-/* si miras la función cr_open, esta recibe el id del proceso, el nombre del archivo y el modo */
-/* lo que te retorna es la representación de un archivo asociado a un proceso y la gracia de esta representación es que tenga
- * toda la información que estimes necesaria para que el resto de las funciones de la API que lo recibirán como argumento puedan funcionar bien */
+    /* crmsfile representa un archivo */
+    /* si miras la función cr_open, esta recibe el id del proceso, el nombre del archivo y el modo */
+    /* lo que te retorna es la representación de un archivo asociado a un proceso y la gracia de esta representación es que tenga
+     * toda la información que estimes necesaria para que el resto de las funciones de la API que lo recibirán como argumento puedan funcionar bien */
     CrmsFile * crms = malloc(sizeof(CrmsFile));
     crms -> process_id = process_id;
     crms -> file_dir = dir;
@@ -34,25 +39,46 @@ void cr_mount(char * memory_path){
 
 void cr_ls_processes(){
     // recorrer pcb y revisar si tiene state 0x01 0 0x00 e imprime el nombre del proceso y su id
-    FILE * memory = fopen(MEMORY_PATH, "r+b");
-    char process_name[NAMES_SIZE];
-    char process_id[PROCESS_ID_SIZE];
-    char process_state[PROCESS_STATE_SIZE];
-    for (int i=0; i < PCB_N_ENTRIES; i++){
 
-        fread(process_state,PROCESS_STATE_SIZE,1,memory); 
-        fread(process_id,PROCESS_ID_SIZE,1,memory); 
+    /* - State(1 Byte): 0x01 || 0x00 (ejecutando o no) */
+    /* - 1 Byte para el PID */
+    /* - 12 Bytes ProcessName */
+    /* - Despues de los 14 Bytes, cada entrada tiene 10 subentradas para guardar informacion sobre los archivos (21 Bytes x 10) de su memoria virtual: */
+    /*     * Valid (1 Byte): 0x01 || 0x00 (valido o no) */
+    /*     * FileName (12 Bytes) */
+    /*     * FileSize (4 Bytes): el max es 32 MB */
+    /*     * VirtualAdress (4 Bytes): 4 bits no significativos (0b0000) + 5 bits VPN + 23 bits offset */
+    /* - Por ultimo: Tabla de Paginas (32 Bytes), 1 Byte y 32 entradas */
+
+    FILE * memory = fopen(MEMORY_PATH, "rb");
+    unsigned char process_name[NAMES_SIZE+1];
+    process_name[NAMES_SIZE]='\0';
+    unsigned char process_id;
+    unsigned char process_state;
+    /* uint32_t myInt1 = *(uint32_t *)bytes; */
+
+    //TODO: fix this
+    for (int i=0; i < PCB_N_ENTRIES; i++){
+        fread(&process_state,PROCESS_STATE_SIZE,1,memory); 
+        fread(&process_id,PROCESS_ID_SIZE,1,memory); 
         fread(process_name,NAMES_SIZE,1,memory); 
+        process_id = ((process_id & 0xf0) >> 4) | ((process_id & 0x0f) << 4);
+        process_state = ((process_state & 0xf0) >> 4) | ((process_state & 0x0f) << 4);
+        printf("PID:%x\n", process_id);
+        printf("STATE:%x\n", process_state);
+
+        /* process_id = bswap_16(process_id); */
+        /* process_state = bswap_16(process_state); */
 
         // si esta en ejecucion, entonces lo imprimimos
-        /* if (strcmp(process_state, "0x01")){ */
-            printf("[PID:%s] Process: %s executing\n", process_id,process_name);
+        /* if (strcmp(process_state, "0x01") == 0){ */
+        printf("[PID:%u] Process: %s state %u\n", (unsigned int)process_id,process_name,(unsigned int)process_state);
+        /* printf("[PID:%s] Process: %s executing\n", process_id,process_name); */
         /* } */
 
         // avanzamos hacia el siguiente proceso
         fseek(memory,PROCESS_N_FILES_ENTRIES*PROCESS_FILE_SIZE + PAGE_TABLE_SIZE,SEEK_CUR);
     }
-
     fclose(memory);
     return;
 }
@@ -67,7 +93,7 @@ int cr_exists(int process_id, char * file_name){
     for (int i=0; i < PCB_N_ENTRIES; i++){
 
         fseek(memory,PROCESS_STATE_SIZE,SEEK_CUR);
-        fread(process_id_buff, PROCESS_ID_SIZE,1,memory);
+        fread(process_id_buff,1, PROCESS_ID_SIZE,memory);
         fseek(memory,NAMES_SIZE,SEEK_CUR);
 
         if ((int) process_id_buff[0] == process_id){
@@ -75,8 +101,8 @@ int cr_exists(int process_id, char * file_name){
                 // nos saltamos el byte de validez
                 fseek(memory,1,SEEK_CUR);
                 // leemos el nombre del archivo del primer archivo
-                fread(process_file,NAMES_SIZE,1,memory); 
-                if (strcmp(process_file,file_name)){
+                fread(process_file,1,NAMES_SIZE,memory); 
+                if (strcmp(process_file,file_name) == 0){
                     fclose(memory);
                     return 1;
                 }
@@ -108,7 +134,7 @@ void cr_ls_files(int process_id){
     for (int i=0; i < PCB_N_ENTRIES; i++){
 
         fseek(memory,PROCESS_STATE_SIZE,SEEK_CUR);
-        fread(process_id_buff, PROCESS_ID_SIZE,1,memory);
+        fread(process_id_buff,1, PROCESS_ID_SIZE,memory);
         fseek(memory,NAMES_SIZE,SEEK_CUR);
 
         if ((int) process_id_buff[0] == process_id){
@@ -118,7 +144,7 @@ void cr_ls_files(int process_id){
                 fseek(memory,1,SEEK_CUR);
 
                 // leemos el nombre del archivo del primer archivo
-                fread(process_file,NAMES_SIZE,1,memory); 
+                fread(process_file,1,NAMES_SIZE,memory); 
                 printf("\tFile with name %s\n", process_file);
 
                 // dejamos el puntero en la siguiente entrada
