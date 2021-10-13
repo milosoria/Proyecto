@@ -38,128 +38,114 @@ void cr_mount(char * memory_path){
 }
 
 void cr_ls_processes(){
-    // recorrer pcb y revisar si tiene state 0x01 0 0x00 e imprime el nombre del proceso y su id
-
-    /* - State(1 Byte): 0x01 || 0x00 (ejecutando o no) */
-    /* - 1 Byte para el PID */
-    /* - 12 Bytes ProcessName */
-    /* - Despues de los 14 Bytes, cada entrada tiene 10 subentradas para guardar informacion sobre los archivos (21 Bytes x 10) de su memoria virtual: */
-    /*     * Valid (1 Byte): 0x01 || 0x00 (valido o no) */
-    /*     * FileName (12 Bytes) */
-    /*     * FileSize (4 Bytes): el max es 32 MB */
-    /*     * VirtualAdress (4 Bytes): 4 bits no significativos (0b0000) + 5 bits VPN + 23 bits offset */
-    /* - Por ultimo: Tabla de Paginas (32 Bytes), 1 Byte y 32 entradas */
-
     FILE * memory = fopen(MEMORY_PATH, "rb");
-    unsigned char process_name[NAMES_SIZE+1];
-    process_name[NAMES_SIZE]='\0';
-    unsigned char process_id;
+    unsigned char process_name[NAMES_SIZE];
     unsigned char process_state;
-    /* uint32_t myInt1 = *(uint32_t *)bytes; */
+    unsigned int process_id_uint;
 
-    //TODO: fix this
     for (int i=0; i < PCB_N_ENTRIES; i++){
         fread(&process_state,PROCESS_STATE_SIZE,1,memory); 
-        fread(&process_id,PROCESS_ID_SIZE,1,memory); 
-        fread(process_name,NAMES_SIZE,1,memory); 
-        process_id = ((process_id & 0xf0) >> 4) | ((process_id & 0x0f) << 4);
-        process_state = ((process_state & 0xf0) >> 4) | ((process_state & 0x0f) << 4);
-        printf("PID:%x\n", process_id);
-        printf("STATE:%x\n", process_state);
+        if (process_state == (unsigned char)0x01){
+            // obtenemos el pid
+            process_id_uint = fgetc(memory);
+            // obtenemos el nombre del proceso
+            fread(process_name,NAMES_SIZE,1,memory);
+            printf("[PID:%i] Process: %s state 0x%02x\n", (unsigned int)process_id_uint,process_name,process_state);
+            /* printf("[PID:%s] Process: %s executing\n", process_id,process_name); */
+            fseek(memory,PROCESS_N_FILES_ENTRIES*PROCESS_FILE_ENTRY_SIZE + PAGE_TABLE_ENTRY_SIZE*PAGE_TABLE_N_ENTRIES,SEEK_CUR);
+        } else {
+            fseek(memory,PROCESS_ID_SIZE+NAMES_SIZE+PROCESS_N_FILES_ENTRIES*PROCESS_FILE_ENTRY_SIZE + PAGE_TABLE_ENTRY_SIZE*PAGE_TABLE_N_ENTRIES,SEEK_CUR);
+        }
 
-        /* process_id = bswap_16(process_id); */
-        /* process_state = bswap_16(process_state); */
-
-        // si esta en ejecucion, entonces lo imprimimos
-        /* if (strcmp(process_state, "0x01") == 0){ */
-        printf("[PID:%u] Process: %s state %u\n", (unsigned int)process_id,process_name,(unsigned int)process_state);
-        /* printf("[PID:%s] Process: %s executing\n", process_id,process_name); */
-        /* } */
-
-        // avanzamos hacia el siguiente proceso
-        fseek(memory,PROCESS_N_FILES_ENTRIES*PROCESS_FILE_SIZE + PAGE_TABLE_SIZE,SEEK_CUR);
     }
     fclose(memory);
-    return;
 }
 
 
 int cr_exists(int process_id, char * file_name){
-    // Comprobar si en la PCB el proceso tiene al archivo file_name
-    FILE * memory = fopen(MEMORY_PATH, "r+b");
+
+    //int cr_exists(int process_id, char \* file_name): Funcion para ver si un archivo con nombre file_name existe en la memoria del proceso
+    //con id process_id. Retorna 1 si existe || 0 si no.
+
+
+    FILE * memory = fopen(MEMORY_PATH, "rb");
+
     char process_file[PROCESS_FILE_ENTRY_SIZE];
-    char process_id_buff[PROCESS_ID_SIZE];
+    unsigned int process_id_uint;
+    unsigned char process_state;
 
     for (int i=0; i < PCB_N_ENTRIES; i++){
 
-        fseek(memory,PROCESS_STATE_SIZE,SEEK_CUR);
-        fread(process_id_buff,1, PROCESS_ID_SIZE,memory);
-        fseek(memory,NAMES_SIZE,SEEK_CUR);
+        fread(&process_state,PROCESS_STATE_SIZE,1,memory);
+        printf("SEEK_CUR %i\n", SEEK_CUR);
+        printf("PID: state 0x%02x\n",process_state);
+        if (process_state == (unsigned char)0x01){
+            process_id_uint = fgetc(memory);
+            fseek(memory,NAMES_SIZE,SEEK_CUR);
 
-        if ((int) process_id_buff[0] == process_id){
-            for (int j=0; j < PROCESS_N_FILES_ENTRIES; j++){
-                // nos saltamos el byte de validez
-                fseek(memory,1,SEEK_CUR);
-                // leemos el nombre del archivo del primer archivo
-                fread(process_file,1,NAMES_SIZE,memory); 
-                if (strcmp(process_file,file_name) == 0){
-                    fclose(memory);
-                    return 1;
+            printf("PID %i FOUND %i\n", process_id, process_id_uint);
+            if (process_id_uint == (unsigned int) process_id){
+                for (int j=0; j < PROCESS_N_FILES_ENTRIES; j++){
+                    // nos saltamos el byte de validez
+                    fseek(memory,1,SEEK_CUR);
+                    // leemos el nombre del archivo del primer archivo
+                    fread(process_file,NAMES_SIZE,1,memory); 
+                    if (strcmp(process_file,file_name) == 0){
+                        // encontramos el archivo, entonces retornamos 1
+                        fclose(memory);
+                        return 1;
+                    }
+                    // dejamos el puntero al comienzo de la siguiente entrada de archivos
+                    fseek(memory,PROCESS_FILE_SIZE+VIRTUAL_ADRESS_SIZE,SEEK_CUR); 
                 }
-                // dejamos el puntero al comienzo de la siguiente entrada de archivos
-                fseek(memory,PROCESS_FILE_SIZE+VIRTUAL_ADRESS_SIZE,SEEK_CUR); 
+                // Si no encontramos el archivo, retornamos 0
+                fclose(memory);
+                return 0;
+
             }
-
-            fclose(memory);
-            return 0;
-
         } else {
-            fseek(memory, PROCESS_N_FILES_ENTRIES * PROCESS_FILE_SIZE, SEEK_CUR);
+            fseek(memory,PROCESS_ID_SIZE+NAMES_SIZE+PROCESS_N_FILES_ENTRIES*PROCESS_FILE_ENTRY_SIZE + PAGE_TABLE_ENTRY_SIZE*PAGE_TABLE_N_ENTRIES,SEEK_CUR);
         }
-        // El puntero queda al comienzo de la tabla de paginas
-        fseek(memory,PAGE_TABLE_SIZE,SEEK_CUR);
-        // lo dejamos al comienzo de la siguiente entrada de la PCB
     }
-
     fclose(memory);
     return 0;
 }
 
 void cr_ls_files(int process_id){
-    // Comprobar si en la PCB el proceso tiene al archivo file_name
-    FILE * memory = fopen(MEMORY_PATH, "r+b");
-    char process_file[PROCESS_FILE_ENTRY_SIZE];
-    char process_id_buff[PROCESS_ID_SIZE];
+    /*     // Comprobar si en la PCB el proceso tiene al archivo file_name */
+    /*     FILE * memory = fopen(MEMORY_PATH, "r+b"); */
+    /*     char process_file[PROCESS_FILE_ENTRY_SIZE]; */
+    /*     char process_id_buff[PROCESS_ID_SIZE]; */
 
-    for (int i=0; i < PCB_N_ENTRIES; i++){
+    /*     for (int i=0; i < PCB_N_ENTRIES; i++){ */
 
-        fseek(memory,PROCESS_STATE_SIZE,SEEK_CUR);
-        fread(process_id_buff,1, PROCESS_ID_SIZE,memory);
-        fseek(memory,NAMES_SIZE,SEEK_CUR);
+    /*         fseek(memory,PROCESS_STATE_SIZE,SEEK_CUR); */
+    /*         fread(process_id_buff,1, PROCESS_ID_SIZE,memory); */
+    /*         fseek(memory,NAMES_SIZE,SEEK_CUR); */
 
-        if ((int) process_id_buff[0] == process_id){
-            printf("[PID:%s] Process with the following files:\n", process_id_buff);
-            for (int j=0; j < PROCESS_N_FILES_ENTRIES; j++){
-                // nos saltamos el byte de validez
-                fseek(memory,1,SEEK_CUR);
+    /*         if ((int) process_id_buff[0] == process_id){ */
+    /*             printf("[PID:%s] Process with the following files:\n", process_id_buff); */
+    /*             for (int j=0; j < PROCESS_N_FILES_ENTRIES; j++){ */
+    /*                 // nos saltamos el byte de validez */
+    /*                 fseek(memory,1,SEEK_CUR); */
 
-                // leemos el nombre del archivo del primer archivo
-                fread(process_file,1,NAMES_SIZE,memory); 
-                printf("\tFile with name %s\n", process_file);
+    /*                 // leemos el nombre del archivo del primer archivo */
+    /*                 fread(process_file,1,NAMES_SIZE,memory); */ 
+    /*                 printf("\tFile with name %s\n", process_file); */
 
-                // dejamos el puntero en la siguiente entrada
-                fseek(memory,PROCESS_FILE_SIZE+VIRTUAL_ADRESS_SIZE,SEEK_CUR); 
-            }
+    /*                 // dejamos el puntero en la siguiente entrada */
+    /*                 fseek(memory,PROCESS_FILE_SIZE+VIRTUAL_ADRESS_SIZE,SEEK_CUR); */ 
+    /*             } */
 
-            fclose(memory);
-            return;
-        } else {
-            fseek(memory, PROCESS_N_FILES_ENTRIES * PROCESS_FILE_SIZE, SEEK_CUR);
-        }
+    /*             fclose(memory); */
+    /*             return; */
+    /*         } else { */
+    /*             fseek(memory, PROCESS_N_FILES_ENTRIES * PROCESS_FILE_SIZE, SEEK_CUR); */
+    /*         } */
 
-        fseek(memory,PAGE_TABLE_SIZE,SEEK_CUR);
+    /*         fseek(memory,PAGE_TABLE_SIZE,SEEK_CUR); */
 
-    }
+    /*     } */
 }
 
 // Funciones Procesos

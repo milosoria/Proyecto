@@ -10,4 +10,5 @@ int main( int argc, char**argv){
     char * memory_path  = argv[1];
     cr_mount(memory_path);
     cr_ls_processes();
+    cr_exists(32,"secret.txt");
 }
