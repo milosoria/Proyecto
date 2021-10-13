@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <arpa/inet.h>
-#include <byteswap.h>
+//#include <byteswap.h>
 #include <sys/types.h>
 
 // esta bien hacerlo asi?
