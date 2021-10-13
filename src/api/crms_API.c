@@ -92,10 +92,10 @@ int cr_exists(int process_id, char * file_name){
                 fread(process_file,NAMES_SIZE,1,memory); 
                 // si el archivo esta cargado
                 if (file_state ==  0x01){
-                    printf("\tFILE STATE 0x%02x\n",file_state);
-                    printf("\tFILE NAME %s\n", process_file);
+                    printf("\tFILE %s STATE 0x%02x\n",process_file,file_state);
                     // comprobamos si es el que buscamos
                     if (strcmp((char *) process_file,file_name) == 0){
+                        printf("\tFILE FOUND %s\n", process_file);
                         // encontramos el archivo, entonces retornamos 1
                         fclose(memory);
                         return 1;
