@@ -38,6 +38,7 @@ void cr_mount(char * memory_path){
 }
 
 void cr_ls_processes(){
+    printf("CR_LS_PROCESSES RUNNING\n");
     FILE * memory = fopen(MEMORY_PATH, "rb");
     unsigned char process_name[NAMES_SIZE];
     unsigned char process_state;
@@ -50,8 +51,7 @@ void cr_ls_processes(){
             process_id_uint = fgetc(memory);
             // obtenemos el nombre del proceso
             fread(process_name,NAMES_SIZE,1,memory);
-            printf("[PID:%i] Process: %s state 0x%02x\n", (unsigned int)process_id_uint,process_name,process_state);
-            /* printf("[PID:%s] Process: %s executing\n", process_id,process_name); */
+            printf("\t[PID:%i] Process: %s state 0x%02x\n", (unsigned int)process_id_uint,process_name,process_state);
             fseek(memory,PROCESS_N_FILES_ENTRIES*PROCESS_FILE_ENTRY_SIZE + PAGE_TABLE_ENTRY_SIZE*PAGE_TABLE_N_ENTRIES,SEEK_CUR);
         } else {
             fseek(memory,PROCESS_ID_SIZE+NAMES_SIZE+PROCESS_N_FILES_ENTRIES*PROCESS_FILE_ENTRY_SIZE + PAGE_TABLE_ENTRY_SIZE*PAGE_TABLE_N_ENTRIES,SEEK_CUR);
@@ -63,11 +63,7 @@ void cr_ls_processes(){
 
 
 int cr_exists(int process_id, char * file_name){
-
-    //int cr_exists(int process_id, char \* file_name): Funcion para ver si un archivo con nombre file_name existe en la memoria del proceso
-    //con id process_id. Retorna 1 si existe || 0 si no.
-
-
+    printf("CR_EXISTS RUNNING\n");
     FILE * memory = fopen(MEMORY_PATH, "rb");
 
     char process_file[PROCESS_FILE_ENTRY_SIZE];
@@ -77,14 +73,13 @@ int cr_exists(int process_id, char * file_name){
     for (int i=0; i < PCB_N_ENTRIES; i++){
 
         fread(&process_state,PROCESS_STATE_SIZE,1,memory);
-        printf("SEEK_CUR %i\n", SEEK_CUR);
-        printf("PID: state 0x%02x\n",process_state);
+        process_id_uint = fgetc(memory);
+
         if (process_state == (unsigned char)0x01){
-            process_id_uint = fgetc(memory);
             fseek(memory,NAMES_SIZE,SEEK_CUR);
 
-            printf("PID %i FOUND %i\n", process_id, process_id_uint);
             if (process_id_uint == (unsigned int) process_id){
+                printf("\tPID %u FOUND %u\n", process_id, process_id_uint);
                 for (int j=0; j < PROCESS_N_FILES_ENTRIES; j++){
                     // nos saltamos el byte de validez
                     fseek(memory,1,SEEK_CUR);
@@ -101,10 +96,11 @@ int cr_exists(int process_id, char * file_name){
                 // Si no encontramos el archivo, retornamos 0
                 fclose(memory);
                 return 0;
-
+            } else {
+                fseek(memory,PROCESS_N_FILES_ENTRIES*PROCESS_FILE_ENTRY_SIZE + PAGE_TABLE_ENTRY_SIZE*PAGE_TABLE_N_ENTRIES,SEEK_CUR);
             }
         } else {
-            fseek(memory,PROCESS_ID_SIZE+NAMES_SIZE+PROCESS_N_FILES_ENTRIES*PROCESS_FILE_ENTRY_SIZE + PAGE_TABLE_ENTRY_SIZE*PAGE_TABLE_N_ENTRIES,SEEK_CUR);
+            fseek(memory,NAMES_SIZE+PROCESS_N_FILES_ENTRIES*PROCESS_FILE_ENTRY_SIZE + PAGE_TABLE_ENTRY_SIZE*PAGE_TABLE_N_ENTRIES,SEEK_CUR);
         }
     }
     fclose(memory);
