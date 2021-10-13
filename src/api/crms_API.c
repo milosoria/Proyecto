@@ -166,7 +166,6 @@ void cr_start_process(int process_id, char * process_name){
     printf("CR_START_PROCESS RUNNING\n");
     FILE * memory = fopen(MEMORY_PATH, "r+b");
     unsigned char process_state;
-    unsigned char process_name_buff[NAMES_SIZE];
     unsigned int process_id_uint;
     unsigned char init_state = 0x01;
     unsigned char init_valid = 0x00;
@@ -182,12 +181,8 @@ void cr_start_process(int process_id, char * process_name){
             fwrite(&init_state, sizeof(unsigned char), 1, memory);
             fwrite(&process_id, sizeof(unsigned char), 1, memory);
 
-            // TODO: Esta bien esto para escribirlo en big endian?
-            for (int k=0; k < NAMES_SIZE;k++){
-                process_name_buff[k] = ((((process_name[k]) & 0xff) << 8) | ((process_name[k]) >> 8));
-            }
 
-            fwrite(process_name_buff, sizeof(unsigned char), NAMES_SIZE, memory);
+            fwrite(process_name, sizeof(unsigned char), NAMES_SIZE, memory);
             printf("\tWRITING INFO NAME:%s AND PID:%i\n", process_name,process_id);
             for (int j=0; j < PROCESS_N_FILES_ENTRIES; j++){
                 fwrite(&init_valid, sizeof(unsigned char), 1, memory);
