@@ -66,48 +66,50 @@ int cr_exists(int process_id, char * file_name){
     printf("CR_EXISTS RUNNING\n");
     FILE * memory = fopen(MEMORY_PATH, "rb");
 
-    unsigned char process_file[PROCESS_FILE_ENTRY_SIZE];
+    unsigned char process_file[NAMES_SIZE];
     unsigned int process_id_uint;
     unsigned char file_state;
     unsigned char process_state;
 
     for (int i=0; i < PCB_N_ENTRIES; i++){
 
+        // estado del proceso
         fread(&process_state,PROCESS_STATE_SIZE,1,memory);
+        // id del proceso 
         process_id_uint = fgetc(memory);
+        // saltamos su nombre
+        fseek(memory,NAMES_SIZE,SEEK_CUR);
 
-        if (process_state == (unsigned char)0x01){
-            fseek(memory,NAMES_SIZE,SEEK_CUR);
+        // si el proceso esta cargado y tiene id igual al buscado
+        if (process_state == (unsigned char)0x01 && process_id_uint == (unsigned int) process_id){
 
-            if (process_id_uint == (unsigned int) process_id){
-                printf("\tPID %u FOUND %u\n", process_id, process_id_uint);
-                for (int j=0; j < PROCESS_N_FILES_ENTRIES; j++){
-                    // nos saltamos el byte de validez
-                    fread(&file_state,1,1,memory);
-                    // TODO: Entra aca, a pesar de que el estado es 0x00
-                    if ((unsigned char)process_state ==(unsigned char) 0x01){
-                        printf("\tFILE STATE 0x%02x\n",file_state);
-                        // leemos el nombre del archivo del primer archivo
-                        fread(process_file,NAMES_SIZE,1,memory); 
-                        printf("\tFILE NAME %s\n", process_file);
-                        //printf("\tPROCESS FILE NAME %s\n", process_file);
-                        if (strcmp(process_file,file_name) == 0){
-                            // encontramos el archivo, entonces retornamos 1
-                            fclose(memory);
-                            return 1;
-                        }
-                        // dejamos el puntero al comienzo de la siguiente entrada de archivos
+            printf("\t[PID:%u] FOUND\n", process_id_uint);
+            // recorremos las entradas de archivos
+            for (int j=0; j < PROCESS_N_FILES_ENTRIES; j++){
+                // estado del archivo
+                fread(&file_state,1,1,memory);
+                // nombre del archivo
+                fread(process_file,NAMES_SIZE,1,memory); 
+                // si el archivo esta cargado
+                if (file_state ==  0x01){
+                    printf("\tFILE STATE 0x%02x\n",file_state);
+                    printf("\tFILE NAME %s\n", process_file);
+                    // comprobamos si es el que buscamos
+                    if (strcmp((char *) process_file,file_name) == 0){
+                        // encontramos el archivo, entonces retornamos 1
+                        fclose(memory);
+                        return 1;
                     }
-                    fseek(memory,PROCESS_FILE_SIZE+VIRTUAL_ADRESS_SIZE,SEEK_CUR); 
                 }
-                // Si no encontramos el archivo, retornamos 0
-                fclose(memory);
-                return 0;
-            } else {
-                fseek(memory,PROCESS_N_FILES_ENTRIES*PROCESS_FILE_ENTRY_SIZE + PAGE_TABLE_ENTRY_SIZE*PAGE_TABLE_N_ENTRIES,SEEK_CUR);
+                // dejamos el puntero en la siguiente entrada si es que quedan entradas
+                fseek(memory,PROCESS_FILE_SIZE+VIRTUAL_ADRESS_SIZE,SEEK_CUR); 
             }
+            // Si no encontramos el archivo, retornamos 0
+            fclose(memory);
+            return 0;
         } else {
-            fseek(memory,NAMES_SIZE+PROCESS_N_FILES_ENTRIES*PROCESS_FILE_ENTRY_SIZE + PAGE_TABLE_ENTRY_SIZE*PAGE_TABLE_N_ENTRIES,SEEK_CUR);
+            // Nos saltamos todas las entradas del proceso y dejamos el puntero en la siguiente entrada de al PCB
+            fseek(memory,PROCESS_N_FILES_ENTRIES*PROCESS_FILE_ENTRY_SIZE + PAGE_TABLE_ENTRY_SIZE*PAGE_TABLE_N_ENTRIES,SEEK_CUR);
         }
     }
     fclose(memory);
