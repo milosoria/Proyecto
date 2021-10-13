@@ -9,6 +9,8 @@ int main( int argc, char**argv){
 
     char * memory_path  = argv[1];
     cr_mount(memory_path);
-    cr_ls_processes();
     cr_exists(200,"hecomes.mp4");
+    cr_ls_files(200);
+    cr_start_process(215,"camiloprocess");
+    cr_ls_processes();
 }
