@@ -68,7 +68,7 @@ Implementacion de funciones para manipular archivos de procesos:
 
 ### Funciones Procesos:
 
-- [ ] void cr_start_process(int process_id , char \* process_name): Funcion que inica un proceso con id process_id y nombre process_name. Guarda toda la informacion en una entrada de la PCB.
+- [X] void cr_start_process(int process_id , char \* process_name): Funcion que inica un proceso con id process_id y nombre process_name. Guarda toda la informacion en una entrada de la PCB.
 
 - [ ] void cr_finish_process(int process_id): Funcion para terminar un proceso con id process_id. Es importante que antes de que el proceso termine se debe liberar toda la memoria asignada y no debe tener entrada valida en la tabla de PCB.
 

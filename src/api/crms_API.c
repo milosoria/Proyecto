@@ -46,17 +46,14 @@ void cr_ls_processes(){
 
     for (int i=0; i < PCB_N_ENTRIES; i++){
         fread(&process_state,PROCESS_STATE_SIZE,1,memory); 
+        process_id_uint = fgetc(memory);
+        // obtenemos el nombre del proceso
+        fread(process_name,NAMES_SIZE,1,memory);
         if (process_state == (unsigned char)0x01){
             // obtenemos el pid
-            process_id_uint = fgetc(memory);
-            // obtenemos el nombre del proceso
-            fread(process_name,NAMES_SIZE,1,memory);
             printf("\t[PID:%i] Process: %s state 0x%02x\n", (unsigned int)process_id_uint,process_name,process_state);
-            fseek(memory,PROCESS_N_FILES_ENTRIES*PROCESS_FILE_ENTRY_SIZE + PAGE_TABLE_ENTRY_SIZE*PAGE_TABLE_N_ENTRIES,SEEK_CUR);
-        } else {
-            fseek(memory,PROCESS_ID_SIZE+NAMES_SIZE+PROCESS_N_FILES_ENTRIES*PROCESS_FILE_ENTRY_SIZE + PAGE_TABLE_ENTRY_SIZE*PAGE_TABLE_N_ENTRIES,SEEK_CUR);
         }
-
+        fseek(memory,PROCESS_N_FILES_ENTRIES*PROCESS_FILE_ENTRY_SIZE + PAGE_TABLE_ENTRY_SIZE*PAGE_TABLE_N_ENTRIES,SEEK_CUR);
     }
     fclose(memory);
 }
@@ -169,19 +166,29 @@ void cr_start_process(int process_id, char * process_name){
     printf("CR_START_PROCESS RUNNING\n");
     FILE * memory = fopen(MEMORY_PATH, "r+b");
     unsigned char process_state;
+    unsigned char process_name_buff[NAMES_SIZE];
     unsigned int process_id_uint;
     unsigned char init_state = 0x01;
     unsigned char init_valid = 0x00;
 
     for (int i=0; i < PCB_N_ENTRIES; i++){
         fread(&process_state,PROCESS_STATE_SIZE,1,memory); 
+        // buscamos la primera entrada disponible
         if (process_state == (unsigned char)0x00){
-            printf("FOUND AN EMPTY ENTRY\n");
             // encontramos una entrada vacia en la pcb
-
+            printf("\tFOUND AN EMPTY ENTRY\n");
+            // Nos devolvemos un byte, para sobrescribir el estado
+            fseek(memory,-1L,SEEK_CUR);
             fwrite(&init_state, sizeof(unsigned char), 1, memory);
-            // TODO: como hacer esto respetando la endianess
-            fwrite(process_name, sizeof(char), 12, memory);
+            fwrite(&process_id, sizeof(unsigned char), 1, memory);
+
+            // TODO: Esta bien esto para escribirlo en big endian?
+            for (int k=0; k < NAMES_SIZE;k++){
+                process_name_buff[k] = ((((process_name[k]) & 0xff) << 8) | ((process_name[k]) >> 8));
+            }
+
+            fwrite(process_name_buff, sizeof(unsigned char), NAMES_SIZE, memory);
+            printf("\tWRITING INFO NAME:%s AND PID:%i\n", process_name,process_id);
             for (int j=0; j < PROCESS_N_FILES_ENTRIES; j++){
                 fwrite(&init_valid, sizeof(unsigned char), 1, memory);
                 //Pasamos a la siguiente entrada de archivos

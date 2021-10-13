@@ -11,6 +11,6 @@ int main( int argc, char**argv){
     cr_mount(memory_path);
     cr_exists(200,"hecomes.mp4");
     cr_ls_files(200);
-    cr_start_process(215,"camiloprocess");
+    cr_start_process(215,"camilo");
     cr_ls_processes();
 }
