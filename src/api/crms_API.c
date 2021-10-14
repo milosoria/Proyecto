@@ -11,7 +11,7 @@
 char * MEMORY_PATH;
 
 // Funciones para manejar struct
-CrmsFile * init_crms_file(unsigned int virtual_dir, int process_id, int last_pos, unsigned int size, unsigned int* tabla_paginas){
+CrmsFile * init_crms_file(unsigned int virtual_dir, unsigned int process_id, unsigned int size, unsigned int moves, char *file_name){
     /* crmsfile representa un archivo */
     /* si miras la función cr_open, esta recibe el id del proceso, el nombre del archivo y el modo */
     /* lo que te retorna es la representación de un archivo asociado a un proceso y la gracia de esta representación es que tenga
@@ -20,10 +20,9 @@ CrmsFile * init_crms_file(unsigned int virtual_dir, int process_id, int last_pos
     CrmsFile * crms = malloc(sizeof(CrmsFile));
     crms -> process_id = process_id;
     crms -> virtual_dir = virtual_dir;
-    crms -> last_pos = last_pos;
-    // para usar fseek
     crms -> size = size;
-    crms -> tabla_paginas = tabla_paginas;
+    crms -> last_pos = 0;
+    crms -> file_name = strdup(file_name);
     return crms;
 }
 
@@ -216,6 +215,7 @@ CrmsFile* cr_open(int process_id, char* file_name, char mode){
 
     if (exists){
         if (mode == 'r'){
+            CrmsFile* crms_file;
             FILE * memory = fopen(MEMORY_PATH, "rb");
             unsigned char process_file[NAMES_SIZE];
             unsigned int process_id_uint;
@@ -225,14 +225,18 @@ CrmsFile* cr_open(int process_id, char* file_name, char mode){
             unsigned int file_size;
             unsigned int file_va;
 
-            for (int i=0; i < PCB_N_ENTRIES; i++){
+            unsigned int moves;
 
+            for (int i=0; i < PCB_N_ENTRIES; i++){
                 // estado del proceso
                 fread(&process_state,PROCESS_STATE_SIZE,1,memory);
+                moves += PROCESS_STATE_SIZE;
                 // id del proceso 
                 process_id_uint = fgetc(memory);
+                moves += 1;
                 // saltamos su nombre
                 fseek(memory,NAMES_SIZE,SEEK_CUR);
+                moves += NAMES_SIZE;
                 // si el proceso esta cargado y tiene id igual al buscado
                 if (process_state == (unsigned char)0x01 && process_id_uint == (unsigned int) process_id){
                     printf("\t[PID:%u] FOUND\n", process_id_uint);
@@ -240,36 +244,47 @@ CrmsFile* cr_open(int process_id, char* file_name, char mode){
                     for (int j=0; j < PROCESS_N_FILES_ENTRIES; j++){
                         // estado del archivo
                         fread(&file_state,1,1,memory);
+                        moves += 1;
                         // nombre del archivo
-                        fread(process_file,NAMES_SIZE,1,memory); 
+                        fread(process_file,NAMES_SIZE,1,memory);
+                        moves += NAMES_SIZE;
                         // si el archivo esta cargado
                         if (file_state ==  0x01 && strcmp((char *) process_file,file_name) == 0){
                             printf("\tFILE FOUND %s\n", process_file);
                             // comprobamos si es el que buscamos
                             fread(&file_size,PROCESS_FILE_SIZE,1,memory);
                             file_size = (unsigned int) bswap_32(file_size);
+
                             fread(&file_va,VIRTUAL_ADRESS_SIZE,1,memory);
                             file_va = (unsigned int) bswap_32(file_va);
+                    // le sumamos todos los bytes de las subentradas de archivos 10 subentradas * 21 bytes por subentrada.
+                            moves += 210;
                             printf("\tSIZE: %u\n", file_size);
                             printf("\tVA: %u\n", file_va);
-                            va_divide(file_va);
-                            exit(0);
+                            printf("\tMOVES: %u\n", moves);
+                            
+                            crms_file = init_crms_file(file_va, process_id_uint, file_size, moves, file_name);
+                            fclose(memory);
+                            return crms_file;
                         } else {
                             // dejamos el puntero en la siguiente entrada si es que quedan entradas
-                            fseek(memory,PROCESS_FILE_SIZE+VIRTUAL_ADRESS_SIZE,SEEK_CUR); 
+                            fseek(memory,PROCESS_FILE_SIZE+VIRTUAL_ADRESS_SIZE,SEEK_CUR);
                         }
                         
                     }
-                    // Si no encontramos el archivo, retornamos 0
+                    // Si no encontramos el archivo, retornamos ERROR
                     fclose(memory);
-                    return 0;
+                    printf("ERROR: el archivo por leer no existe.\n");
+                    return -1;
                 } else {
                     // Nos saltamos todas las entradas del proceso y dejamos el puntero en la siguiente entrada de al PCB
                     fseek(memory,PROCESS_N_FILES_ENTRIES*PROCESS_FILE_ENTRY_SIZE + PAGE_TABLE_ENTRY_SIZE*PAGE_TABLE_N_ENTRIES,SEEK_CUR);
                 }
             }
+            // Si no encontramos el proceso, retornamos ERROR
             fclose(memory);
-            return 0;
+            printf("ERROR: el proceso por leer no existe.\n");
+            return -1;
             
         } else if (mode == 'w') {
             // error pq el archivo ya exite
@@ -296,7 +311,99 @@ CrmsFile* cr_open(int process_id, char* file_name, char mode){
 
 int cr_write_file(CrmsFile* file_desc, void * buffer, int n_bytes){}
 
-int cr_read(CrmsFile * file_desc, void* buffer, int n_bytes){}
+int cr_read(CrmsFile * file_desc, void* buffer, int n_bytes){
+    // printf("CR_READ RUNNING\n");
+    // FILE * memory = fopen(MEMORY_PATH, "rb");
+    // fseek(memory, file_desc -> moves, SEEK_CUR);
+
+    // unsigned int primera_pagina;
+    // fread(&primera_pagina, PAGE_TABLE_ENTRY_SIZE,1,memory);
+    // primera_pagina = (unsigned int) bswap_32(primera_pagina);
+
+    // printf("\tPAGE TABLE ENTRY: %u\n", primera_pagina);
+
+    // fclose(memory);
+
+    int process_id = file_desc -> process_id;
+    char* file_name = file_desc -> file_name;
+
+    FILE * memory = fopen(MEMORY_PATH, "rb");
+    unsigned char process_file[NAMES_SIZE];
+    unsigned int process_id_uint;
+    unsigned char file_state;
+    unsigned char process_state;
+
+    unsigned int file_size;
+    unsigned int file_va;
+
+    unsigned int moves;
+
+    for (int i=0; i < PCB_N_ENTRIES; i++){
+        // estado del proceso
+        fread(&process_state,PROCESS_STATE_SIZE,1,memory);
+        moves += PROCESS_STATE_SIZE;
+        // id del proceso 
+        process_id_uint = fgetc(memory);
+        moves += 1;
+        // saltamos su nombre
+        fseek(memory,NAMES_SIZE,SEEK_CUR);
+        moves += NAMES_SIZE;
+        // si el proceso esta cargado y tiene id igual al buscado
+        if (process_state == (unsigned char)0x01 && process_id_uint == (unsigned int) process_id){
+            printf("\t[PID:%u] FOUND\n", process_id_uint);
+            // recorremos las entradas de archivos
+            fseek(memory,PROCESS_N_FILES_ENTRIES*PROCESS_FILE_ENTRY_SIZE,SEEK_CUR);
+            unsigned int entry;
+            for (int i = 0; i < PAGE_TABLE_N_ENTRIES; i++)
+            {
+                fread(&entry, PAGE_TABLE_ENTRY_SIZE,1,memory);
+                printf("\tPAGE ENTRY %d: %u\n", i, entry);
+            }
+            exit(0);
+            // for (int j=0; j < PROCESS_N_FILES_ENTRIES; j++){
+            //     // estado del archivo
+            //     fread(&file_state,1,1,memory);
+            //     moves += 1;
+            //     // nombre del archivo
+            //     fread(process_file,NAMES_SIZE,1,memory);
+            //     moves += NAMES_SIZE;
+            //     // si el archivo esta cargado
+            //     if (file_state ==  0x01 && strcmp((char *) process_file,file_name) == 0){
+            //         printf("\tFILE FOUND %s\n", process_file);
+            //         // comprobamos si es el que buscamos
+            //         fread(&file_size,PROCESS_FILE_SIZE,1,memory);
+            //         file_size = (unsigned int) bswap_32(file_size);
+
+            //         fread(&file_va,VIRTUAL_ADRESS_SIZE,1,memory);
+            //         file_va = (unsigned int) bswap_32(file_va);
+            // // le sumamos todos los bytes de las subentradas de archivos 10 subentradas * 21 bytes por subentrada.
+            //         moves += 210;
+            //         printf("\tSIZE: %u\n", file_size);
+            //         printf("\tVA: %u\n", file_va);
+            //         printf("\tMOVES: %u\n", moves);
+                    
+            //         fclose(memory);
+            //         exit(0);
+            //     } else {
+            //         // dejamos el puntero en la siguiente entrada si es que quedan entradas
+            //         fseek(memory,PROCESS_FILE_SIZE+VIRTUAL_ADRESS_SIZE,SEEK_CUR);
+            //     }
+                
+            // }
+            // Si no encontramos el archivo, retornamos ERROR
+            fclose(memory);
+            printf("ERROR: el archivo por leer no existe.\n");
+            return -1;
+        } else {
+            // Nos saltamos todas las entradas del proceso y dejamos el puntero en la siguiente entrada de al PCB
+            fseek(memory,PROCESS_N_FILES_ENTRIES*PROCESS_FILE_ENTRY_SIZE + PAGE_TABLE_ENTRY_SIZE*PAGE_TABLE_N_ENTRIES,SEEK_CUR);
+        }
+    }
+    // Si no encontramos el proceso, retornamos ERROR
+    fclose(memory);
+    printf("ERROR: el proceso por leer no existe.\n");
+    return -1;
+}
 
 void cr_delete(CrmsFile * file_desc){
     return;
@@ -315,6 +422,15 @@ unsigned int va_vpn(unsigned int file_va){
     return vpn;
 }
 
+unsigned int ta_validez(unsigned int table_entry){
+    unsigned int validez = table_entry >> 7;
+    return validez;
+}
+
+unsigned int ta_pfn(unsigned int table_entry){
+    unsigned int pfn = table_entry & 63;
+    return pfn;
+}
 
 void va_print(unsigned int file_va){
     unsigned int vpn;
@@ -348,6 +464,6 @@ void bin(unsigned n, int m)
 //  > "00000"
 {
     unsigned i;
-    for (i = 1 << m-1; i > 0; i = i / 2)
+    for (i = 1 << (m-1); i > 0; i = i / 2)
         (n & i) ? printf("1") : printf("0");
 }

@@ -18,7 +18,8 @@ int main( int argc, char**argv){
     // cr_ls_files(0);
     //cr_ls_processes();
     CrmsFile* crms_file = cr_open(0,"secret.txt", 'r');
-
     
+    cr_read(crms_file, malloc(crms_file->size), crms_file->size);
 
+    destroy_crms_file(crms_file);
 }
