@@ -54,3 +54,8 @@ int cr_write_file(CrmsFile* file_desc, void * buffer, int n_bytes);
 int cr_read( CrmsFile * file_desc, void* buffer, int n_bytes);
 void cr_delete(CrmsFile * file_desc);
 void cr_close(CrmsFile* file_desc);
+
+unsigned int va_vpn(unsigned int file_va);
+unsigned int va_offset(unsigned int file_va);
+void bin(unsigned n, int m);
+void va_print(unsigned int file_va);

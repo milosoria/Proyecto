@@ -14,14 +14,11 @@ int main( int argc, char**argv){
     unsigned int size;
     
     cr_mount(memory_path);
-    cr_exists(0,"secret.txt");
-    cr_ls_files(0);
-    cr_ls_processes();
+    // cr_exists(0,"secret.txt");
+    // cr_ls_files(0);
+    //cr_ls_processes();
     CrmsFile* crms_file = cr_open(0,"secret.txt", 'r');
 
     
-    /* printf("\t SIZE: %u \n", bswap_32(size)); */
-    //printf("\t DIR VIRTUAL: %u \n", bswap_32(virtual_dir));
-    //printf("\t TABLA DE PÁGINAS \n");
-    /* cprintf("\t MAIN: el valor de tabla_paginas es: %p.\n", tabla_paginas); */
+
 }

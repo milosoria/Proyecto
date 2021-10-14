@@ -224,8 +224,6 @@ CrmsFile* cr_open(int process_id, char* file_name, char mode){
 
             unsigned int file_size;
             unsigned int file_va;
-            //unsigned char file_size[PROCESS_FILE_SIZE];
-            //unsigned char file_va[VIRTUAL_ADRESS_SIZE];
 
             for (int i=0; i < PCB_N_ENTRIES; i++){
 
@@ -254,6 +252,7 @@ CrmsFile* cr_open(int process_id, char* file_name, char mode){
                             file_va = (unsigned int) bswap_32(file_va);
                             printf("\tSIZE: %u\n", file_size);
                             printf("\tVA: %u\n", file_va);
+                            va_divide(file_va);
                             exit(0);
                         } else {
                             // dejamos el puntero en la siguiente entrada si es que quedan entradas
@@ -304,4 +303,51 @@ void cr_delete(CrmsFile * file_desc){
 }
 void cr_close(CrmsFile* file_desc){
     return;
+}
+
+unsigned int va_offset(unsigned int file_va){
+    unsigned int offset = file_va & 2097151;
+    return offset;
+}
+
+unsigned int va_vpn(unsigned int file_va){
+    unsigned int vpn = file_va >> 23;
+    return vpn;
+}
+
+
+void va_print(unsigned int file_va){
+    unsigned int vpn;
+    unsigned int offset;
+
+    printf("VA en binario: ");
+    bin(file_va, 32);
+    printf("\n");
+
+    offset = file_va & 2097151;
+    vpn = file_va >> 23;
+
+    printf("Offset en binario: ");
+    bin(offset, 23);
+    printf("\n");
+
+
+    printf("VPN en binario: ");
+    bin(vpn, 5);
+    printf("\n");
+
+}
+
+void bin(unsigned n, int m)
+// Imprime "m" bits de un decimal "n" en binario.
+// Ej: bin(89216, 32)
+//  > "00000000000000010101110010000000"
+// Ej: bin(89216, 23)
+//  > "00000010101110010000000"
+// Ej: bin(0, 5)
+//  > "00000"
+{
+    unsigned i;
+    for (i = 1 << m-1; i > 0; i = i / 2)
+        (n & i) ? printf("1") : printf("0");
 }
