@@ -1,22 +1,37 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include "../crms/sizes.h"
+#if HAVE_BYTESWAP_H
+#include <byteswap.h>
+#else
+#define bswap_16(value) \
+((((value) & 0xff) << 8) | ((value) >> 8))
+
+#define bswap_32(value) \
+(((uint32_t)bswap_16((uint16_t)((value) & 0xffff)) << 16) | \
+(uint32_t)bswap_16((uint16_t)((value) >> 16)))
+
+#define bswap_64(value) \
+(((uint64_t)bswap_32((uint32_t)((value) & 0xffffffff)) \
+<< 32) | \
+(uint64_t)bswap_32((uint32_t)((value) >> 32)))
+#endif
 
 //TODO: son estos atributos necesarios???
 typedef struct crmsfile {
     // direccion dentro de la memoria
-    u_int64_t  file_dir;
-    // pointer a la memoria
-    FILE * file_ptr;
+    unsigned int  virtual_dir;
     // ultima posicion leida por cr_read o offset desde donde comenzar a leer
     int last_pos;
     int process_id;
     // size del archivo
-    int n_bytes;
+    unsigned int size;
+    // tabla de páginas del archivo
+    unsigned int* tabla_paginas;
 } CrmsFile;
 
 // Funciones para manejar struct
-CrmsFile * init_crms_file(u_int64_t dir,int process_id, FILE* file_ptr,int last_pos, int size);
+CrmsFile * init_crms_file(unsigned int virtual_dir,int process_id, int last_pos, unsigned int size, unsigned int* tabla_paginas);
 
 // Funciones Generales
 void cr_mount(char * memory_path);

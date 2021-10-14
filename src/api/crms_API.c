@@ -4,31 +4,29 @@
 #include <stdlib.h>
 #include <string.h>
 #include <arpa/inet.h>
-//#include <byteswap.h>
 #include <sys/types.h>
 
 // esta bien hacerlo asi?
 char * MEMORY_PATH;
 
 // Funciones para manejar struct
-CrmsFile * init_crms_file(u_int64_t dir,int process_id, FILE* file_ptr,int last_pos, int size){
+CrmsFile * init_crms_file(unsigned int virtual_dir, int process_id, int last_pos, unsigned int size, unsigned int* tabla_paginas){
     /* crmsfile representa un archivo */
     /* si miras la función cr_open, esta recibe el id del proceso, el nombre del archivo y el modo */
     /* lo que te retorna es la representación de un archivo asociado a un proceso y la gracia de esta representación es que tenga
-     * toda la información que estimes necesaria para que el resto de las funciones de la API que lo recibirán como argumento puedan funcionar bien */
+     * toda la información que estimes necesaria para que el resto de las funciones de la API que lo recibirán como 
+     argumento puedan funcionar bien */
     CrmsFile * crms = malloc(sizeof(CrmsFile));
     crms -> process_id = process_id;
-    crms -> file_dir = dir;
-    crms -> file_ptr = file_ptr;
+    crms -> virtual_dir = virtual_dir;
     crms -> last_pos = last_pos;
     // para usar fseek
-    crms -> n_bytes = size;
-
+    crms -> size = size;
+    crms -> tabla_paginas = tabla_paginas;
     return crms;
 }
 
 void destroy_crms_file(CrmsFile* file){
-    fclose(file->file_ptr);
     free(file);
 }
 
@@ -110,6 +108,7 @@ int cr_exists(int process_id, char * file_name){
     FILE * memory = fopen(MEMORY_PATH, "rb");
 
     unsigned char process_file[NAMES_SIZE];
+    unsigned char process_name[NAMES_SIZE];
     unsigned int process_id_uint;
     unsigned char file_state;
     unsigned char process_state;
@@ -120,9 +119,11 @@ int cr_exists(int process_id, char * file_name){
         fread(&process_state,PROCESS_STATE_SIZE,1,memory);
         // id del proceso 
         process_id_uint = fgetc(memory);
-        // saltamos su nombre
-        fseek(memory,NAMES_SIZE,SEEK_CUR);
+        // nombre del proceso
+        fread(process_name,NAMES_SIZE,1,memory);
 
+        printf("\tPROCESS %s ID %u STATE 0x%02x\n",process_name,process_id_uint,file_state);
+        
         // si el proceso esta cargado y tiene id igual al buscado
         if (process_state == (unsigned char)0x01 && process_id_uint == (unsigned int) process_id){
 
@@ -134,8 +135,8 @@ int cr_exists(int process_id, char * file_name){
                 // nombre del archivo
                 fread(process_file,NAMES_SIZE,1,memory); 
                 // si el archivo esta cargado
+                printf("\tFILE %s STATE 0x%02x\n",process_file,file_state);
                 if (file_state ==  0x01){
-                    printf("\tFILE %s STATE 0x%02x\n",process_file,file_state);
                     // comprobamos si es el que buscamos
                     if (strcmp((char *) process_file,file_name) == 0){
                         printf("\tFILE FOUND %s\n", process_file);
@@ -209,11 +210,104 @@ void cr_finish_process(int process_id){
 
 // Funciones Archivos
 CrmsFile* cr_open(int process_id, char* file_name, char mode){
-    if (mode == 'r'){
-        return NULL;
+    printf("CR_OPEN RUNNING\n");
+
+    int exists = cr_exists(process_id, file_name);
+    printf("CR_EXISTS ENDS\n");
+    
+    if (exists){
+        if (mode == 'r'){
+            
+            FILE * memory = fopen(MEMORY_PATH, "rb");
+            
+            unsigned char process_file[NAMES_SIZE];
+            unsigned char process_name[NAMES_SIZE];
+            unsigned int process_id_uint;
+
+            // INFO TABLA DE PCBs
+            unsigned char file_state;
+            unsigned char process_state;
+            unsigned int file_size;
+            unsigned int virtual_dir;
+            unsigned int last_pos;
+
+            // INFO TABLA DE PÁGINAS
+            unsigned int tabla_paginas[PAGE_TABLE_N_ENTRIES];
+
+            // CRMS FILE PARA RETURNEAR
+            CrmsFile* cmrs_file;
+
+            for (int i=0; i < PCB_N_ENTRIES; i++){
+                
+                // estado del proceso
+                fread(&process_state,PROCESS_STATE_SIZE,1,memory);
+                // id del proceso 
+                process_id_uint = fgetc(memory);
+                // nombre del proceso
+                fread(process_name,NAMES_SIZE,1,memory);
+
+                printf("\tPROCESS %s ID %u STATE 0x%02x\n",process_name,process_id_uint,file_state);
+                // si el proceso esta cargado y tiene id igual al buscado
+                if (process_state == (unsigned char)0x01 && process_id_uint == (unsigned int) process_id){
+                    printf("\t[PID:%u] FOUND\n", process_id_uint);
+
+                    // recorremos las entradas de archivos
+                    for (int j=0; j < PROCESS_N_FILES_ENTRIES; j++){
+                        // > TABLA DE PCBs
+                        // estado del archivo
+                        fread(&file_state,1,1,memory);
+                        // nombre del archivo
+                        fread(process_file,NAMES_SIZE,1,memory);
+                        printf("\tFILE %s STATE 0x%02x\n",process_file,file_state);
+                        // si el archivo esta cargado
+                        if (file_state ==  0x01){
+                            // tamaño del archivo
+                            printf("HOLA\n");
+                            fread(file_size,PROCESS_FILE_SIZE,1,memory);
+                            printf("CHAO\n");
+                            // dirección virtual
+                            fread(virtual_dir,VIRTUAL_ADRESS_SIZE,1,memory);
+                            
+                            // >> TABLA DE PÁGINAS
+                            for (int k=0; k < PAGE_TABLE_N_ENTRIES; k++){
+                                // leer entradas de tabla de páginas
+                                fread(tabla_paginas[k],1,1,memory);
+                            }
+
+
+                            // comprobamos si es el que buscamos
+                            if (strcmp((char *) process_file,file_name) == 0){
+                                // encontramos el archivo
+                                printf("\t CMRS_OPEN: el valor de tabla_paginas es: %p.\n", tabla_paginas);
+                                cmrs_file = init_crms_file(virtual_dir, process_id, last_pos, file_size, tabla_paginas);
+                                fclose(memory);
+                                return cmrs_file;
+                            }
+                        }
+                    }
+                    // Si no encontramos el archivo, retornamos 0
+                    fclose(memory);
+                    return 0;
+                } else {
+                    // Nos saltamos todas las entradas del proceso y dejamos el puntero en la siguiente entrada de al PCB
+                    fseek(memory,PROCESS_N_FILES_ENTRIES*PROCESS_FILE_ENTRY_SIZE + PAGE_TABLE_ENTRY_SIZE*PAGE_TABLE_N_ENTRIES,SEEK_CUR);
+                }
+            }
+            fclose(memory);
+            return 0;
+        } else if (mode == 'w') {
+            // error pq el archivo ya exite
+            printf("ERROR: se está creando un archivo que ya existe.\n");
+            return -1;
+        }
     } else {
-        int exists = cr_exists(process_id, file_name);
-        return NULL;
+        if (mode == 'r'){
+            // error pq el archivo no exite
+            printf("ERROR: se está leyendo un archivo que no existe.\n");
+            return -1;
+        } else if (mode == 'w') {
+            return NULL;
+        }
     }
 }
 
