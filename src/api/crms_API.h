@@ -17,20 +17,24 @@
 (uint64_t)bswap_32((uint32_t)((value) >> 32))) 
 #endif 
 
-//TODO: son estos atributos necesarios???
 typedef struct crmsfile {
     // nombre del archivo
     char *file_name;
     // direccion dentro de la memoria
     unsigned int  virtual_dir;
-    // ultima posicion leida por cr_read o offset desde donde comenzar a leer
+    // id del proceso
     unsigned int process_id;
     // size del archivo
     unsigned int size;
     // dirección física
     unsigned int dir;
-    // útlima posición leída
+    // ultima posición leída o offset
     unsigned int last_pos;
+    // cantidad de bytes leídos (recorridos)
+    unsigned int bytes_leidos;
+    // dirección en bytes de la page table;
+    unsigned int dir_page_table;
+    unsigned int pfn;
 } CrmsFile;
 
 // Funciones para manejar struct
@@ -56,6 +60,7 @@ void cr_finish_process(int process_id);
 // Funciones Archivos
 CrmsFile* cr_open(int process_id, char* file_name, char mode);
 int cr_write_file(CrmsFile* file_desc, void * buffer, int n_bytes);
+int cr_conseguir_dir( CrmsFile * file_desc);
 int cr_read( CrmsFile * file_desc, void* buffer, int n_bytes);
 void cr_delete(CrmsFile * file_desc);
 void cr_close(CrmsFile* file_desc);
@@ -65,8 +70,8 @@ unsigned int va_vpn(unsigned int file_va);
 unsigned int va_offset(unsigned int file_va);
 
 // Page Table
-unsigned int ta_validez(unsigned int table_entry);
-unsigned int ta_pfn(unsigned int table_entry);
+unsigned char ta_validez(unsigned char table_entry);
+unsigned int ta_pfn(unsigned char table_entry);
 
 void bin(unsigned n, int m);
 void va_print(unsigned int file_va);
