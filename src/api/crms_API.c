@@ -329,6 +329,8 @@ CrmsFile* cr_open(int process_id, char* file_name, char mode){
 /* 7.Entre el VPN, y el PFN de cada pagina sabes cuales frames leer y cuanto leer. */
 
 int cr_write_file(CrmsFile* file_desc, void * buffer, int n_bytes){
+    FILE* memory = fopen(MEMORY_PATH,"r+b");
+    fseek(memory,file_desc->dir_page_table,SEEK_CUR);
 
 /* - [ ] int cr_write_file(CrmsFile\* file_desc, void \* buffer, int n_bytes):
  * Funcion para escribir archivos.
