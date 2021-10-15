@@ -21,8 +21,13 @@ CrmsFile * init_crms_file(unsigned int virtual_dir, unsigned int process_id, uns
     crms -> process_id = process_id;
     crms -> virtual_dir = virtual_dir;
     crms -> size = size;
+    // Los siguientes parten en 0, si inicializan con cr_conseguir_dir
     crms -> last_pos = 0;
+    crms -> dir = 0;
+    crms -> dir_page_table = 0;
+    // Este se va llenando en cr_read.
     crms -> bytes_leidos = 0;
+    
     crms -> file_name = strdup(file_name);
     return crms;
 }
@@ -341,7 +346,7 @@ int cr_conseguir_dir( CrmsFile * file_desc){
     unsigned char file_state;
     unsigned char process_state;
 
-    unsigned int moves;
+    unsigned int moves = 0;
 
     for (int i=0; i < PCB_N_ENTRIES; i++){
         // estado del proceso
@@ -357,7 +362,11 @@ int cr_conseguir_dir( CrmsFile * file_desc){
         if (process_state == (unsigned char)0x01 && process_id_uint == (unsigned int) process_id){
             // recorremos las entradas de archivos
             fseek(memory,PROCESS_N_FILES_ENTRIES*PROCESS_FILE_ENTRY_SIZE,SEEK_CUR);
+            moves += PROCESS_N_FILES_ENTRIES*PROCESS_FILE_ENTRY_SIZE;
             unsigned int entry;
+
+            // Guardamos la dirección (en bytes de la page table).
+            file_desc -> dir_page_table = moves;
             for (int i = 0; i < PAGE_TABLE_N_ENTRIES; i++)
             {   
                 // DE ACÁ EN ADELANTE ESTOY ITERANDO POR LA PAGE TABLE
@@ -392,8 +401,10 @@ int cr_conseguir_dir( CrmsFile * file_desc){
             printf("ERROR: el archivo por leer no existe.\n");
             return -1;
         } else {
+            // Este proceso no nos sirve, por lo que >
             // Nos saltamos todas las entradas del proceso y dejamos el puntero en la siguiente entrada de al PCB
             fseek(memory,PROCESS_N_FILES_ENTRIES*PROCESS_FILE_ENTRY_SIZE + PAGE_TABLE_ENTRY_SIZE*PAGE_TABLE_N_ENTRIES,SEEK_CUR);
+            moves += PROCESS_N_FILES_ENTRIES*PROCESS_FILE_ENTRY_SIZE + PAGE_TABLE_ENTRY_SIZE*PAGE_TABLE_N_ENTRIES;
         }
     }
     // Si no encontramos el proceso, retornamos ERROR
