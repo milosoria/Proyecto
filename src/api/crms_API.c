@@ -26,7 +26,7 @@ CrmsFile * init_crms_file(unsigned int virtual_dir, unsigned int process_id, uns
     crms -> dir = 0;
     // Este se va llenando en cr_read.
     crms -> bytes_leidos = 0;
-    
+
     crms -> file_name = strdup(file_name);
     return crms;
 }
@@ -311,10 +311,10 @@ CrmsFile* cr_open(int process_id, char* file_name, char mode){
 
                             fread(&file_va,VIRTUAL_ADRESS_SIZE,1,memory);
                             file_va = (unsigned int) bswap_32(file_va);
-                    // le sumamos todos los bytes de las subentradas de archivos 10 subentradas * 21 bytes por subentrada.
+                            // le sumamos todos los bytes de las subentradas de archivos 10 subentradas * 21 bytes por subentrada.
                             printf("\tSIZE: %u\n", file_size);
                             printf("\tVA: %u\n", file_va);
-                            
+
                             crms_file = init_crms_file(file_va, process_id_uint, file_size, file_name);
                             fclose(memory);
                             return crms_file;
@@ -322,7 +322,7 @@ CrmsFile* cr_open(int process_id, char* file_name, char mode){
                             // dejamos el puntero en la siguiente entrada si es que quedan entradas
                             fseek(memory,PROCESS_FILE_SIZE+VIRTUAL_ADRESS_SIZE,SEEK_CUR);
                         }
-                        
+
                     }
                     // Si no encontramos el archivo, retornamos ERROR
                     fclose(memory);
@@ -337,7 +337,7 @@ CrmsFile* cr_open(int process_id, char* file_name, char mode){
             fclose(memory);
             printf("ERROR: el proceso por leer no existe.\n");
             return -1;
-            
+
         } else if (mode == 'w') {
             // error pq el archivo ya exite
             printf("ERROR: se está creando un archivo que ya existe.\n");
@@ -413,6 +413,7 @@ CrmsFile* cr_open(int process_id, char* file_name, char mode){
             return NULL;
         }
     }
+    return NULL;
 }
 
 /* 1.Lees de entrada en entrada del proceso (mediante el uso de fseek y fread) */
@@ -422,40 +423,79 @@ CrmsFile* cr_open(int process_id, char* file_name, char mode){
 /* 6.Por cada pagina perteneciente al archivo con el PFN obtienes exactamente el frame y al que pertenece la pagina. */
 /* 7.Entre el VPN, y el PFN de cada pagina sabes cuales frames leer y cuanto leer. */
 
-// int cr_write_file(CrmsFile* file_desc, void * buffer, int n_bytes){
-//     // asumo que conseguir dir me retorna la direccion fisica, por ahora ocupo dir_page_table
-//     FILE* memory = fopen(MEMORY_PATH,"r+b");
-//     fseek(memory,file_desc->dir_page_table,SEEK_CUR);
-//     unsigned int offset = get__offset(file_desc->virtual_dir);
-//     printf("virtual_dir %i\n", file_desc->virtual_dir);
-//     printf("dir_page_table %i\n", file_desc->dir_page_table);
-//     return 1;
-// }
-/* - [ ] int cr_write_file(CrmsFile\* file_desc, void \* buffer, int n_bytes):
- * Funcion para escribir archivos.
- * Escribe en el archivo representado por file_desc los n_bytes que se encuentran en la direccion indicada por buffer y
- * retorna la cantidad de Bytes escritos en el archivo (en caso de no terminar). La escritura comienza desde el primer espacio libre (IMPORTANTE)
- * dentro de la memoria virtual. La escritura termina cuando: */
 
-/*     - No quedan frames disponibles para continuar */
-/*     - Se termina el espacio contiguo en la memoria virtual */
-/*     - Se escribieron los n_bytes */
+int cr_write_file(CrmsFile* file_desc, void * buffer, int n_bytes){
+    // IMPORTANTE: CABE RECALCAR QUE LOS ARCHIVOS PARTEN CON SIZE 0 Y LUEGO SU SIZE CRECE A MEDIDA QUE SE ESCRIBE.
+    // TODO: 
+    //   - Identificar si existe otro archivo en las proximas direcciones, "cortando" la memoria continua
 
-/* Con la direccion virtual de cada archivo tienes la página y el offset y aparte tienes el tamaño del proceso */
-/* Sabes que las paginas tienen asociado un frame único a ellas */
-/* asi que si analizas todas las entradas validas puedes saber, haciendo uso de la pagina y los offset y los tamaños que espacios vacios hay y donde */
-/* y así mismo si tomas el proceso con mayor direccion virtual tienes por garantia de por como
- * se construye la direccion virutal que despues de ese proceso está todo vacío */
+    printf("CR_WRITE_FILE RUNNING\n");
 
+    unsigned int dir_actual= file_desc->dir; 
+    unsigned int offset;
+    
+    printf("\tDIR INICIAL: %u\n", dir_actual);
 
+    printf("\tBytes por leer en esta llamada: %d.\n", n_bytes);
+    printf("\t-- BEGIN FOR --\n");
 
-int cr_conseguir_dir(CrmsFile * file_desc){
+    // Abrimos el archivo de memoria
+    FILE * memory = fopen(MEMORY_PATH, "r+b");
+    // Tenemos que leer la cantidad de bytes.
+    for (int i = 1; i < n_bytes + 1; i++)
+    {
+        // Encontramos la nueva dir_actual.
+        cr_conseguir_dir(file_desc,'w');
+        dir_actual = file_desc -> dir;
+        // funcion para obtener offset
+        offset = get_offset(dir_actual);
+        printf("\t DIR_ACTUAL %u AND OFFSET %u\n", dir_actual, offset);
+        return 1;
+        if (offset == 0){
+            // verificar que la pagina este vacia
+            // El proceso comienza en una nueva pagina o nos cambiamos a una nueva pagina despues de escribir
+            // conectamos un nuevo frame
+
+            // CASOS DE TERMINO:
+                /* No quedan frames disponibles para continuar, o */
+                    /* - Si no hay frames disponibles, entonces retornamos file_desc -> size */ 
+                /* • Se termina el espacio contiguo en la memoria virtual, es lo mismo esto que no encontrar frames disponibles? */
+        } else{
+            // seguimos en la misma pagina
+            // nos movemos a la direccion fisica
+            fseek(memory, dir_actual, SEEK_SET);
+            // escribimos un byte
+            fwrite(&buffer[file_desc->size], 1, 1, memory);
+            // actualizamos los bytes escritos
+            file_desc -> size += 1;
+        }
+
+        /* • SE ESCRIBIERON LOS N BYTES. */
+        if (file_desc -> size == n_bytes){
+            printf("\t-- END FILE --\n");
+            printf("Se han escrito %i bytes exitosamente\n", file_desc->size);
+            printf("CR_WRITE_FILE END. Bytes escritos (output): %i.\n", i);
+            fclose(memory);
+            return i;
+        }
+    }
+    printf("\t-- END FOR --\n");
+    printf("Se han escrito los %d bytes.\n", n_bytes);
+    printf("CR_READ END. Bytes escritos (output): %d.\n", n_bytes);
+    fclose(memory);
+    return n_bytes;
+
+}
+
+int cr_conseguir_dir( CrmsFile * file_desc, char mode){
+
     int process_id = file_desc -> process_id;
     char* file_name = file_desc -> file_name;
 
     unsigned int file_size = file_desc -> size;
-    // Se obtiene el virtual address por leer address del archivo
-    unsigned int file_va = file_desc -> virtual_dir + file_desc -> bytes_leidos;
+    // Se obtiene el virtual por leer address del archivo
+    unsigned int file_va = file_desc -> virtual_dir + mode == 'w'?file_desc->size:file_desc -> bytes_leidos;
+
 
     unsigned int vpn = va_vpn(file_va);
     unsigned int offset = get_offset(file_va);
@@ -508,6 +548,7 @@ int cr_conseguir_dir(CrmsFile * file_desc){
 
                         file_desc -> pfn = pfn;
                         file_desc -> dir = dir;
+
                         // Fijamos la última posición leída a la dirección física inicial. 
                         fclose(memory);
                         return 0;
@@ -540,11 +581,11 @@ int cr_read(CrmsFile * file_desc, char* buffer, int n_bytes){
     // Si la dirección física del archivo todavía no ha sido init.
     if (!file_desc -> bytes_leidos){
         printf("\tEs primera vez que se lee este archivo (o se leyó antes, pero terminó de leerse completamente), por lo que se buscará su dirección física.\n");
-        cr_conseguir_dir(file_desc);
+        cr_conseguir_dir(file_desc,'r');
         printf("\tDirección física encontrada: %u.\n", file_desc -> dir);
     } else {
         printf("\tEste archivo ya se ha leído antes.\n");
-        cr_conseguir_dir(file_desc);
+        cr_conseguir_dir(file_desc,'r');
         printf("\tCantidad de bytes previamente leídos: %u.\n", file_desc -> bytes_leidos);
     }
 
@@ -565,7 +606,7 @@ int cr_read(CrmsFile * file_desc, char* buffer, int n_bytes){
     for (int i = 1; i < n_bytes + 1; i++)
     {
         // Encontramos la nueva dir_actual.
-        cr_conseguir_dir(file_desc);
+        cr_conseguir_dir(file_desc,'r');
         dir_actual = file_desc -> dir;
         // Nos movemos a la dirección física.
         fseek(memory, dir_actual, SEEK_SET);
@@ -705,11 +746,6 @@ void cr_delete(CrmsFile * file_desc){
     exit(0);
 }
 
-void cr_close(CrmsFile* file_desc){
-    free(file_desc->file_name);
-    free(file_desc);
-}
-
 unsigned int get_offset(unsigned int file_va){
     unsigned int offset = file_va & 2097151;
     return offset;
@@ -754,13 +790,13 @@ void va_print(unsigned int file_va){
 }
 
 void bin(unsigned n, int m)
-// Imprime "m" bits de un decimal "n" en binario.
-// Ej: bin(89216, 32)
-//  > "00000000000000010101110010000000"
-// Ej: bin(89216, 23)
-//  > "00000010101110010000000"
-// Ej: bin(0, 5)
-//  > "00000"
+    // Imprime "m" bits de un decimal "n" en binario.
+    // Ej: bin(89216, 32)
+    //  > "00000000000000010101110010000000"
+    // Ej: bin(89216, 23)
+    //  > "00000010101110010000000"
+    // Ej: bin(0, 5)
+    //  > "00000"
 {
     unsigned i;
     for (i = 1 << (m-1); i > 0; i = i / 2)

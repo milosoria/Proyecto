@@ -20,16 +20,20 @@
 typedef struct crmsfile {
     // nombre del archivo
     char *file_name;
+    // direccion dentro de la memoria
+    unsigned int virtual_dir;
     // id del proceso
     unsigned int process_id;
     // size del archivo
     unsigned int size;
-    // direccion virtual inicial
-    unsigned int  virtual_dir;
+    // dirección física
+    unsigned int dir;
+    // ultima posición leída o offset
+    unsigned int last_pos;
     // cantidad de bytes leídos (recorridos)
     unsigned int bytes_leidos;
-    // dirección física hasta ahora (dirección virtual + bytes leídos)
-    unsigned int dir;
+    // dirección en bytes de la page table;
+    unsigned int dir_page_table;
     unsigned int pfn;
 } CrmsFile;
 
@@ -55,8 +59,8 @@ void cr_finish_process(int process_id);
 // Funciones Archivos
 CrmsFile* cr_open(int process_id, char* file_name, char mode);
 int cr_write_file(CrmsFile* file_desc, void * buffer, int n_bytes);
-int cr_conseguir_dir( CrmsFile * file_desc);
-int cr_read( CrmsFile * file_desc, char* buffer, int n_bytes);
+int cr_conseguir_dir( CrmsFile * file_desc, char mode);
+int cr_read(CrmsFile * file_desc, char* buffer, int n_bytes);
 void cr_delete(CrmsFile * file_desc);
 void cr_close(CrmsFile* file_desc);
 
@@ -80,4 +84,3 @@ void print_page_table(unsigned int PID);
 
 //Escribir en un file real
 void write_file_real(char* buffer, CrmsFile*);
-
