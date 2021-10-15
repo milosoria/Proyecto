@@ -374,12 +374,13 @@ int cr_conseguir_dir( CrmsFile * file_desc){
                         // Concatenamos los bits pfn con offset para hacer la dirección física.
                         pfn = pfn << 23;
                         dir_fisica = pfn + offset;
-                        bin(dir_fisica, 32);
                         // Le sumamos los 4KB de la PCB y los 16B del Frame Bitmap
                         unsigned int dir = dir_fisica + PCB_SIZE + FRAME_BITMAP_SIZE;
 
 
                         file_desc -> dir = dir;
+                        // Fijamos la última posición leída a la dirección física inicial. 
+                        file_desc -> last_pos = dir;
                         return -1;
                     } else 
                     {
@@ -403,7 +404,14 @@ int cr_conseguir_dir( CrmsFile * file_desc){
 }
 
 int cr_read(CrmsFile * file_desc, void* buffer, int n_bytes){
-    
+    // Si la dirección física del archivo todavía no ha sido init.
+    if (!file_desc -> dir){
+        cr_conseguir_dir(file_desc);
+    }
+    // Posición inicial -> última posición en la que se leyó el archivo.
+    printf("DIR: %u\n", file_desc->last_pos);
+
+
 }
 
 void cr_delete(CrmsFile * file_desc){

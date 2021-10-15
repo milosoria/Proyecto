@@ -20,12 +20,8 @@ int main( int argc, char**argv){
     //cr_start_process(69, "coloro");
     //cr_ls_processes();
     CrmsFile* crms_file = cr_open(0,"secret.txt", 'r');
-    
-    cr_conseguir_dir(crms_file);
-
-    printf("\tDIR: %u.\n", crms_file -> dir);
 
     cr_read(crms_file, malloc(crms_file->size), crms_file->size);
 
-    //destroy_crms_file(crms_file);
+    destroy_crms_file(crms_file);
 }
