@@ -73,3 +73,5 @@ void va_print(unsigned int file_va);
 
 //Coloro
 unsigned int find_empty_frame();
+void change_frame_bit_map(unsigned char posicion);
+void print_frame_bit_map();

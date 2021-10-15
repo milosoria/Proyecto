@@ -255,6 +255,7 @@ void cr_finish_process(int process_id){
                         //Si tiene bit de validez igual a 1 sabemos que tiene un frame asociado
                         page_table_entry = page_table_entry - 128;
                         printf("Entry #%i - PFN: %i\n", k, page_table_entry);
+                        change_frame_bit_map(page_table_entry);
                     }
                 }
                 fclose(memory);
@@ -512,6 +513,30 @@ unsigned int find_empty_frame(){
     for (int n=0; n < FRAME_BITMAP_SIZE; n++){
         byte_prueba = fgetc(memory);
         bin(byte_prueba, 8);
+        printf("\n");
+    }
+}
+
+void change_frame_bit_map(unsigned char posicion){
+    FILE * memory = fopen(MEMORY_PATH, "r+b");
+    fseek(memory, PCB_SIZE, SEEK_CUR);
+    unsigned int posicion_byte;
+    posicion_byte = posicion / 8;
+    printf("Acceder a byte %d para encontrar posicion %d\n", posicion_byte, posicion);
+    for (int i = 0; i < posicion_byte; i++)
+    {
+        
+    }
+    
+}
+
+void print_frame_bit_map(){
+    FILE * memory = fopen(MEMORY_PATH, "r+b");
+    fseek(memory, PCB_SIZE, SEEK_CUR);
+    unsigned char byte;
+    for (int n=0; n < FRAME_BITMAP_SIZE; n++){
+        byte = fgetc(memory);
+        bin(byte, 8);
         printf("\n");
     }
 }
