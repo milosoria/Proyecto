@@ -11,7 +11,7 @@
 char * MEMORY_PATH;
 
 // Funciones para manejar struct
-CrmsFile * init_crms_file(unsigned int virtual_dir, unsigned int process_id, unsigned int size, unsigned int moves, char *file_name){
+CrmsFile * init_crms_file(unsigned int virtual_dir, unsigned int process_id, unsigned int size, char *file_name){
     /* crmsfile representa un archivo */
     /* si miras la función cr_open, esta recibe el id del proceso, el nombre del archivo y el modo */
     /* lo que te retorna es la representación de un archivo asociado a un proceso y la gracia de esta representación es que tenga
@@ -164,7 +164,6 @@ void cr_start_process(int process_id, char * process_name){
     printf("CR_START_PROCESS RUNNING\n");
     FILE * memory = fopen(MEMORY_PATH, "r+b");
     unsigned char process_state;
-    unsigned char process_name_buff[NAMES_SIZE];
     unsigned int process_id_uint;
     unsigned char init_state = 0x01;
     unsigned char init_valid = 0x00;
@@ -180,6 +179,7 @@ void cr_start_process(int process_id, char * process_name){
             fwrite(&init_state, sizeof(unsigned char), 1, memory);
             fwrite(&process_id, sizeof(unsigned char), 1, memory);
 
+
             // TODO: Esta bien esto para escribirlo en big endian?
             /*
             for (int k=0; k < NAMES_SIZE;k++){
@@ -192,6 +192,7 @@ void cr_start_process(int process_id, char * process_name){
             size_t elements_to_write = sizeof process_name;
 
             fwrite(process_name, element_size, NAMES_SIZE, memory);
+
             printf("\tWRITING INFO NAME:%s AND PID:%i\n", process_name,process_id);
             for (int j=0; j < PROCESS_N_FILES_ENTRIES; j++){
                 //Cambiamos los bytes de validez de los archivos a 0x00
@@ -246,18 +247,13 @@ CrmsFile* cr_open(int process_id, char* file_name, char mode){
             unsigned int file_size;
             unsigned int file_va;
 
-            unsigned int moves;
-
             for (int i=0; i < PCB_N_ENTRIES; i++){
                 // estado del proceso
                 fread(&process_state,PROCESS_STATE_SIZE,1,memory);
-                moves += PROCESS_STATE_SIZE;
                 // id del proceso 
                 process_id_uint = fgetc(memory);
-                moves += 1;
                 // saltamos su nombre
                 fseek(memory,NAMES_SIZE,SEEK_CUR);
-                moves += NAMES_SIZE;
                 // si el proceso esta cargado y tiene id igual al buscado
                 if (process_state == (unsigned char)0x01 && process_id_uint == (unsigned int) process_id){
                     printf("\t[PID:%u] FOUND\n", process_id_uint);
@@ -265,10 +261,8 @@ CrmsFile* cr_open(int process_id, char* file_name, char mode){
                     for (int j=0; j < PROCESS_N_FILES_ENTRIES; j++){
                         // estado del archivo
                         fread(&file_state,1,1,memory);
-                        moves += 1;
                         // nombre del archivo
                         fread(process_file,NAMES_SIZE,1,memory);
-                        moves += NAMES_SIZE;
                         // si el archivo esta cargado
                         if (file_state ==  0x01 && strcmp((char *) process_file,file_name) == 0){
                             printf("\tFILE FOUND %s\n", process_file);
@@ -279,12 +273,10 @@ CrmsFile* cr_open(int process_id, char* file_name, char mode){
                             fread(&file_va,VIRTUAL_ADRESS_SIZE,1,memory);
                             file_va = (unsigned int) bswap_32(file_va);
                     // le sumamos todos los bytes de las subentradas de archivos 10 subentradas * 21 bytes por subentrada.
-                            moves += 210;
                             printf("\tSIZE: %u\n", file_size);
                             printf("\tVA: %u\n", file_va);
-                            printf("\tMOVES: %u\n", moves);
                             
-                            crms_file = init_crms_file(file_va, process_id_uint, file_size, moves, file_name);
+                            crms_file = init_crms_file(file_va, process_id_uint, file_size, file_name);
                             fclose(memory);
                             return crms_file;
                         } else {
@@ -333,29 +325,20 @@ CrmsFile* cr_open(int process_id, char* file_name, char mode){
 int cr_write_file(CrmsFile* file_desc, void * buffer, int n_bytes){}
 
 int cr_read(CrmsFile * file_desc, void* buffer, int n_bytes){
-    // printf("CR_READ RUNNING\n");
-    // FILE * memory = fopen(MEMORY_PATH, "rb");
-    // fseek(memory, file_desc -> moves, SEEK_CUR);
-
-    // unsigned int primera_pagina;
-    // fread(&primera_pagina, PAGE_TABLE_ENTRY_SIZE,1,memory);
-    // primera_pagina = (unsigned int) bswap_32(primera_pagina);
-
-    // printf("\tPAGE TABLE ENTRY: %u\n", primera_pagina);
-
-    // fclose(memory);
-
     int process_id = file_desc -> process_id;
     char* file_name = file_desc -> file_name;
+
+    unsigned int file_size = file_desc -> size;
+    unsigned int file_va = file_desc -> virtual_dir;
+
+    unsigned int vpn = va_vpn(file_va);
+    unsigned int offset = va_offset(file_va);
 
     FILE * memory = fopen(MEMORY_PATH, "rb");
     unsigned char process_file[NAMES_SIZE];
     unsigned int process_id_uint;
     unsigned char file_state;
     unsigned char process_state;
-
-    unsigned int file_size;
-    unsigned int file_va;
 
     unsigned int moves;
 
@@ -376,42 +359,32 @@ int cr_read(CrmsFile * file_desc, void* buffer, int n_bytes){
             fseek(memory,PROCESS_N_FILES_ENTRIES*PROCESS_FILE_ENTRY_SIZE,SEEK_CUR);
             unsigned int entry;
             for (int i = 0; i < PAGE_TABLE_N_ENTRIES; i++)
-            {
+            {   
+                // DE ACÁ EN ADELANTE ESTOY ITERANDO POR LA PAGE TABLE
                 fread(&entry, PAGE_TABLE_ENTRY_SIZE,1,memory);
                 printf("\tPAGE ENTRY %d: %u\n", i, entry);
-            }
-            exit(0);
-            // for (int j=0; j < PROCESS_N_FILES_ENTRIES; j++){
-            //     // estado del archivo
-            //     fread(&file_state,1,1,memory);
-            //     moves += 1;
-            //     // nombre del archivo
-            //     fread(process_file,NAMES_SIZE,1,memory);
-            //     moves += NAMES_SIZE;
-            //     // si el archivo esta cargado
-            //     if (file_state ==  0x01 && strcmp((char *) process_file,file_name) == 0){
-            //         printf("\tFILE FOUND %s\n", process_file);
-            //         // comprobamos si es el que buscamos
-            //         fread(&file_size,PROCESS_FILE_SIZE,1,memory);
-            //         file_size = (unsigned int) bswap_32(file_size);
+                if (i == vpn)
+                {
+                    unsigned int validez = ta_validez(entry);
+                    if (validez == (unsigned char)0x01)
+                    {
+                        unsigned int pfn = ta_pfn(entry);
+                        unsigned int dir_fisica;
 
-            //         fread(&file_va,VIRTUAL_ADRESS_SIZE,1,memory);
-            //         file_va = (unsigned int) bswap_32(file_va);
-            // // le sumamos todos los bytes de las subentradas de archivos 10 subentradas * 21 bytes por subentrada.
-            //         moves += 210;
-            //         printf("\tSIZE: %u\n", file_size);
-            //         printf("\tVA: %u\n", file_va);
-            //         printf("\tMOVES: %u\n", moves);
-                    
-            //         fclose(memory);
-            //         exit(0);
-            //     } else {
-            //         // dejamos el puntero en la siguiente entrada si es que quedan entradas
-            //         fseek(memory,PROCESS_FILE_SIZE+VIRTUAL_ADRESS_SIZE,SEEK_CUR);
-            //     }
-                
-            // }
-            // Si no encontramos el archivo, retornamos ERROR
+                        // Concatenamos los bits pfn con offset para hacer la dirección física.
+                        pfn = pfn << 23;
+                        dir_fisica = pfn + offset;
+
+                        // Le sumamos los 4KB de la PCB y los 16B del Frame Bitmap
+                        unsigned int dir = dir_fisica + PCB_SIZE + FRAME_BITMAP_SIZE;
+                        return -1;
+                    } else 
+                    {
+                        printf("ERROR: la entrada de la tabla de páginas no es válida.\n");
+                        return -1;    
+                    }
+                }
+            }
             fclose(memory);
             printf("ERROR: el archivo por leer no existe.\n");
             return -1;
@@ -449,7 +422,7 @@ unsigned int ta_validez(unsigned int table_entry){
 }
 
 unsigned int ta_pfn(unsigned int table_entry){
-    unsigned int pfn = table_entry & 63;
+    unsigned int pfn = table_entry & 127;
     return pfn;
 }
 
