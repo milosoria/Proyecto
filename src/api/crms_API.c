@@ -322,7 +322,25 @@ CrmsFile* cr_open(int process_id, char* file_name, char mode){
 /* 6.Por cada pagina perteneciente al archivo con el PFN obtienes exactamente el frame y al que pertenece la pagina. */
 /* 7.Entre el VPN, y el PFN de cada pagina sabes cuales frames leer y cuanto leer. */
 
-int cr_write_file(CrmsFile* file_desc, void * buffer, int n_bytes){}
+int cr_write_file(CrmsFile* file_desc, void * buffer, int n_bytes){
+
+/* - [ ] int cr_write_file(CrmsFile\* file_desc, void \* buffer, int n_bytes):
+ * Funcion para escribir archivos.
+ * Escribe en el archivo representado por file_desc los n_bytes que se encuentran en la direccion indicada por buffer y
+ * retorna la cantidad de Bytes escritos en el archivo (en caso de no terminar). La escritura comienza desde el primer espacio libre (IMPORTANTE)
+ * dentro de la memoria virtual. La escritura termina cuando: */
+
+/*     - No quedan frames disponibles para continuar */
+/*     - Se termina el espacio contiguo en la memoria virtual */
+/*     - Se escribieron los n_bytes */
+
+/* Con la direccion virtual de cada archivo tienes la página y el offset y aparte tienes el tamaño del proceso */
+/* Sabes que las paginas tienen asociado un frame único a ellas */
+/* asi que si analizas todas las entradas validas puedes saber, haciendo uso de la pagina y los offset y los tamaños que espacios vacios hay y donde */
+/* y así mismo si tomas el proceso con mayor direccion virtual tienes por garantia de por como
+ * se construye la direccion virutal que despues de ese proceso está todo vacío */
+
+}
 
 int cr_read(CrmsFile * file_desc, void* buffer, int n_bytes){
     int process_id = file_desc -> process_id;

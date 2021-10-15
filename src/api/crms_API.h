@@ -17,19 +17,18 @@
 (uint64_t)bswap_32((uint32_t)((value) >> 32))) 
 #endif 
 
-//TODO: son estos atributos necesarios???
 typedef struct crmsfile {
     // nombre del archivo
     char *file_name;
     // direccion dentro de la memoria
     unsigned int  virtual_dir;
-    // ultima posicion leida por cr_read o offset desde donde comenzar a leer
+    // id del proceso
     unsigned int process_id;
     // size del archivo
     unsigned int size;
     // dirección física
     unsigned int dir;
-    // útlima posición leída
+    // ultima posición leída o offset
     unsigned int last_pos;
 } CrmsFile;
 
