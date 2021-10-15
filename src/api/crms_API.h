@@ -39,7 +39,6 @@ typedef struct crmsfile {
 
 // Funciones para manejar struct
 CrmsFile * init_crms_file(unsigned int virtual_dir, unsigned int process_id, unsigned int size, char *file_name);
-void destroy_crms_file(CrmsFile* file);
 
 
 // Funciones Generales
@@ -61,13 +60,13 @@ void cr_finish_process(int process_id);
 CrmsFile* cr_open(int process_id, char* file_name, char mode);
 int cr_write_file(CrmsFile* file_desc, void * buffer, int n_bytes);
 int cr_conseguir_dir( CrmsFile * file_desc);
-int cr_read( CrmsFile * file_desc, void* buffer, int n_bytes);
+int cr_read(CrmsFile * file_desc, char* buffer, int n_bytes);
 void cr_delete(CrmsFile * file_desc);
 void cr_close(CrmsFile* file_desc);
 
 // Virtual Address
 unsigned int va_vpn(unsigned int file_va);
-unsigned int va_offset(unsigned int file_va);
+unsigned int get_offset(unsigned int file_va);
 
 // Page Table
 unsigned char ta_validez(unsigned char table_entry);

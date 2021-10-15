@@ -30,9 +30,9 @@ CrmsFile * init_crms_file(unsigned int virtual_dir, unsigned int process_id, uns
     return crms;
 }
 
-void destroy_crms_file(CrmsFile* file){
-    free(file->file_name);
-    free(file);
+void cr_close(CrmsFile* file_desc){
+    free(file_desc->file_name);
+    free(file_desc);
 }
 
 // Funciones Generales
@@ -331,7 +331,6 @@ int cr_write_file(CrmsFile* file_desc, void * buffer, int n_bytes){
     printf("\tDIR INICIAL: %u\n", dir_actual);
 
     printf("\tBytes por leer en esta llamada: %d.\n", n_bytes);
-
     printf("\t-- BEGIN FOR --\n");
 
     // Abrimos el archivo de memoria
@@ -388,7 +387,7 @@ int cr_conseguir_dir( CrmsFile * file_desc){
     unsigned int file_va = file_desc -> virtual_dir + file_desc -> bytes_leidos;
 
     unsigned int vpn = va_vpn(file_va);
-    unsigned int offset = va_offset(file_va);
+    unsigned int offset = get_offset(file_va);
 
     FILE * memory = fopen(MEMORY_PATH, "rb");
     // Datos para llegar al Page Table
@@ -514,7 +513,7 @@ int cr_read(CrmsFile * file_desc, char* buffer, int n_bytes){
             // Retornamos la cantidad de bytes leídos hasta ahora por esta llamada.
             printf("CR_READ END. Bytes leídos (output): %d.\n", i);
             fclose(memory);
-             return i;
+            return i;
         }
     }
     // Si termina el for, es por que se leyeron todos los bytes por leer del input 'n_bytes'.
@@ -529,14 +528,12 @@ int cr_read(CrmsFile * file_desc, char* buffer, int n_bytes){
 void cr_delete(CrmsFile * file_desc){
     return;
 }
-void cr_close(CrmsFile* file_desc){
-    return;
-}
 
-unsigned int va_offset(unsigned int file_va){
+unsigned int get_offset(unsigned int file_va){
     unsigned int offset = file_va & 2097151;
     return offset;
 }
+
 
 unsigned int va_vpn(unsigned int file_va){
     unsigned int vpn = file_va >> 23;
@@ -605,14 +602,7 @@ void write_file_real(char* buffer, CrmsFile* file_desc){
     // en un archivo de PATH = '../nombre_de_crmsfile'.
     
     printf("FILE NAME:%s\n", file_desc -> file_name);
-    //char prefacio[len];
-    //strcat(prefacio, "../");
-    //printf("PREFACIO: %s\n", prefacio);
     FILE* archivo = fopen(file_desc->file_name, "wb");
-
-    printf("HOLA\n");
     fwrite(buffer, 1, file_desc -> size, archivo);
-    printf("HOLA\n");
-
     fclose(archivo);
 }
