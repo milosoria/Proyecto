@@ -21,7 +21,13 @@ CrmsFile * init_crms_file(unsigned int virtual_dir, unsigned int process_id, uns
     crms -> process_id = process_id;
     crms -> virtual_dir = virtual_dir;
     crms -> size = size;
+    // Los siguientes parten en 0, si inicializan con cr_conseguir_dir
     crms -> last_pos = 0;
+    crms -> dir = 0;
+    crms -> dir_page_table = 0;
+    // Este se va llenando en cr_read.
+    crms -> bytes_leidos = 0;
+    
     crms -> file_name = strdup(file_name);
     return crms;
 }
@@ -342,7 +348,7 @@ int cr_write_file(CrmsFile* file_desc, void * buffer, int n_bytes){
 
 }
 
-int cr_read(CrmsFile * file_desc, void* buffer, int n_bytes){
+int cr_conseguir_dir( CrmsFile * file_desc){
     int process_id = file_desc -> process_id;
     char* file_name = file_desc -> file_name;
 
@@ -358,7 +364,7 @@ int cr_read(CrmsFile * file_desc, void* buffer, int n_bytes){
     unsigned char file_state;
     unsigned char process_state;
 
-    unsigned int moves;
+    unsigned int moves = 0;
 
     for (int i=0; i < PCB_N_ENTRIES; i++){
         // estado del proceso
@@ -372,15 +378,17 @@ int cr_read(CrmsFile * file_desc, void* buffer, int n_bytes){
         moves += NAMES_SIZE;
         // si el proceso esta cargado y tiene id igual al buscado
         if (process_state == (unsigned char)0x01 && process_id_uint == (unsigned int) process_id){
-            printf("\t[PID:%u] FOUND\n", process_id_uint);
             // recorremos las entradas de archivos
             fseek(memory,PROCESS_N_FILES_ENTRIES*PROCESS_FILE_ENTRY_SIZE,SEEK_CUR);
+            moves += PROCESS_N_FILES_ENTRIES*PROCESS_FILE_ENTRY_SIZE;
             unsigned int entry;
+
+            // Guardamos la dirección (en bytes de la page table).
+            file_desc -> dir_page_table = moves;
             for (int i = 0; i < PAGE_TABLE_N_ENTRIES; i++)
             {   
                 // DE ACÁ EN ADELANTE ESTOY ITERANDO POR LA PAGE TABLE
                 fread(&entry, PAGE_TABLE_ENTRY_SIZE,1,memory);
-                printf("\tPAGE ENTRY %d: %u\n", i, entry);
                 if (i == vpn)
                 {
                     unsigned int validez = ta_validez(entry);
@@ -392,9 +400,13 @@ int cr_read(CrmsFile * file_desc, void* buffer, int n_bytes){
                         // Concatenamos los bits pfn con offset para hacer la dirección física.
                         pfn = pfn << 23;
                         dir_fisica = pfn + offset;
-
                         // Le sumamos los 4KB de la PCB y los 16B del Frame Bitmap
                         unsigned int dir = dir_fisica + PCB_SIZE + FRAME_BITMAP_SIZE;
+
+
+                        file_desc -> dir = dir;
+                        // Fijamos la última posición leída a la dirección física inicial. 
+                        file_desc -> last_pos = dir;
                         return -1;
                     } else 
                     {
@@ -407,14 +419,69 @@ int cr_read(CrmsFile * file_desc, void* buffer, int n_bytes){
             printf("ERROR: el archivo por leer no existe.\n");
             return -1;
         } else {
+            // Este proceso no nos sirve, por lo que >
             // Nos saltamos todas las entradas del proceso y dejamos el puntero en la siguiente entrada de al PCB
             fseek(memory,PROCESS_N_FILES_ENTRIES*PROCESS_FILE_ENTRY_SIZE + PAGE_TABLE_ENTRY_SIZE*PAGE_TABLE_N_ENTRIES,SEEK_CUR);
+            moves += PROCESS_N_FILES_ENTRIES*PROCESS_FILE_ENTRY_SIZE + PAGE_TABLE_ENTRY_SIZE*PAGE_TABLE_N_ENTRIES;
         }
     }
     // Si no encontramos el proceso, retornamos ERROR
     fclose(memory);
     printf("ERROR: el proceso por leer no existe.\n");
     return -1;
+}
+
+int cr_read(CrmsFile * file_desc, void* buffer, int n_bytes){
+    printf("CR_READ RUNNING\n");
+    // Si la dirección física del archivo todavía no ha sido init.
+    if (!file_desc -> dir){
+        printf("\tEs primera vez que se lee este archivo, por lo que se buscará su dirección física.\n");
+        cr_conseguir_dir(file_desc);
+        printf("\t Dirección física encontrada: %u.\n", file_desc -> dir);
+    }
+
+    // Posición actual inicial -> última posición en la que se leyó el archivo.
+    unsigned int dir_actual = file_desc -> last_pos;
+    
+    printf("\tDIR INICIAL: %u\tEn Binario: ", dir_actual);
+    bin(dir_actual, 32);
+    printf("\n");
+
+    printf("\tBytes por leer: %d.\n", n_bytes);
+
+    // Tenemos que leer la cantidad de bytes.
+    for (int i = 1; i < n_bytes + 1; i++)
+    {
+        file_desc -> bytes_leidos += 1;
+
+        // REVISAR SI HAY CAMBIO DE PÁGINA
+
+        // >> LEER/GUARDAR BYTE EN BUFFER
+        // >> ACTUALIZAR LAST_POS y DIR_ACTUAL
+
+
+
+        //REVISAR SI SE LLEGA AL FINAL DEL ARCHIVO
+        // Revisamos si se llega al final del archivo.
+        if (file_desc -> bytes_leidos == file_desc -> size){
+            printf("\tSe ha llegado hasta el final del archivo.\n");
+
+            // Retornamos la cantidad de bytes leídos hasta ahora por esta llamada.
+            printf("CR_READ END. Bytes leídos: %d.", i);
+             return i;
+        }
+
+        //printf(" DIR ACTUAL: %u\n En Binario: ", dir_actual);
+        //bin(dir_actual, 32);
+        //printf("\n");
+    }
+    // Si termina el for, es por que se leyeron todos los bytes por leer del input 'n_bytes'.
+    // Así, termina la función retornando la totalidad de bytes leídos (que es igual a 'n_bytes').
+    printf("\tSe han leído los %d bytes.\n", n_bytes);
+    printf("CR_READ END. Bytes leídos: %d.\n", n_bytes);
+    return n_bytes;
+
+
 }
 
 void cr_delete(CrmsFile * file_desc){
