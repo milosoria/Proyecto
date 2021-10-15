@@ -6,6 +6,7 @@
 #include <string.h>
 #include <arpa/inet.h>
 #include <sys/types.h>
+#include <math.h>
 
 // esta bien hacerlo asi?
 char * MEMORY_PATH;
@@ -247,12 +248,13 @@ void cr_finish_process(int process_id){
                 //Avanzamos a la page table
                 fseek(memory,PROCESS_ID_SIZE+NAMES_SIZE+PROCESS_N_FILES_ENTRIES*PROCESS_FILE_ENTRY_SIZE,SEEK_CUR);
                 //Leemos cada entrada del page table, 
+                printf("\tSe liberan los siguientes frames:\n");
                 for (int k=0; k<PAGE_TABLE_N_ENTRIES; k++){
                     fread(&page_table_entry, PAGE_TABLE_ENTRY_SIZE, 1, memory);
                     if (page_table_entry > 127){
                         //Si tiene bit de validez igual a 1 sabemos que tiene un frame asociado
                         page_table_entry = page_table_entry - 128;
-                        printf("Entry #%i - PFN: %i\n", k, page_table_entry);
+                        printf("\t\tEntry #%i - PFN: %i\n", k, page_table_entry);
                         change_frame_bit_map(page_table_entry);
                     }
                 }
@@ -352,6 +354,67 @@ CrmsFile* cr_open(int process_id, char* file_name, char mode){
             printf("ERROR: se está leyendo un archivo que no existe.\n");
             return -1;
         } else if (mode == 'w') {
+            CrmsFile* crms_file;
+            FILE * memory = fopen(MEMORY_PATH, "rb");
+            unsigned char process_file[NAMES_SIZE];
+            unsigned int process_id_uint;
+            unsigned char file_state;
+            unsigned char process_state;
+
+            unsigned int file_size;
+            unsigned int file_va;
+
+            for (int i=0; i < PCB_N_ENTRIES; i++){
+                // estado del proceso
+                fread(&process_state,PROCESS_STATE_SIZE,1,memory);
+                // id del proceso 
+                process_id_uint = fgetc(memory);
+                // saltamos su nombre
+                fseek(memory,NAMES_SIZE,SEEK_CUR);
+                // si el proceso esta cargado y tiene id igual al buscado
+                if (process_state == (unsigned char)0x01 && process_id_uint == (unsigned int) process_id){
+                    printf("\t[PID:%u] FOUND\n", process_id_uint);
+                    // recorremos las entradas de archivos
+                    for (int j=0; j < PROCESS_N_FILES_ENTRIES; j++){
+                        // estado del archivo
+                        fread(&file_state,1,1,memory);
+                        // nombre del archivo
+                        fread(process_file,NAMES_SIZE,1,memory);
+                        // si el archivo esta cargado
+                        if (file_state ==  0x01 && strcmp((char *) process_file,file_name) == 0){
+                            printf("\tFILE FOUND %s\n", process_file);
+                            // comprobamos si es el que buscamos
+                            fread(&file_size,PROCESS_FILE_SIZE,1,memory);
+                            file_size = (unsigned int) bswap_32(file_size);
+
+                            fread(&file_va,VIRTUAL_ADRESS_SIZE,1,memory);
+                            file_va = (unsigned int) bswap_32(file_va);
+                    // le sumamos todos los bytes de las subentradas de archivos 10 subentradas * 21 bytes por subentrada.
+                            printf("\tSIZE: %u\n", file_size);
+                            printf("\tVA: %u\n", file_va);
+                            
+                            crms_file = init_crms_file(file_va, process_id_uint, file_size, file_name);
+                            fclose(memory);
+                            return crms_file;
+                        } else {
+                            // dejamos el puntero en la siguiente entrada si es que quedan entradas
+                            fseek(memory,PROCESS_FILE_SIZE+VIRTUAL_ADRESS_SIZE,SEEK_CUR);
+                        }
+                        
+                    }
+                    // Si no encontramos el archivo, retornamos ERROR
+                    fclose(memory);
+                    printf("ERROR: el archivo por leer no existe.\n");
+                    return -1;
+                } else {
+                    // Nos saltamos todas las entradas del proceso y dejamos el puntero en la siguiente entrada de al PCB
+                    fseek(memory,PROCESS_N_FILES_ENTRIES*PROCESS_FILE_ENTRY_SIZE + PAGE_TABLE_ENTRY_SIZE*PAGE_TABLE_N_ENTRIES,SEEK_CUR);
+                }
+            }
+            // Si no encontramos el proceso, retornamos ERROR
+            fclose(memory);
+            printf("ERROR: el proceso por leer no existe.\n");
+            return -1;
             return NULL;
         }
     }
@@ -591,31 +654,73 @@ void bin(unsigned n, int m)
         (n & i) ? printf("1") : printf("0");
 }
 
-unsigned int find_empty_frame(){
+unsigned char find_empty_frame(){
+    //OJO: no solo lo encuentra, también lo cambia
     FILE * memory = fopen(MEMORY_PATH, "r+b");
     fseek(memory, PCB_SIZE, SEEK_CUR);
-    unsigned int byte_prueba;
+    unsigned char byte;
+    unsigned char cero = 0x00;
+    unsigned char uno = 0x01;
+    unsigned char bit_buscado;
+    unsigned char bits_pasados;
+
     for (int n=0; n < FRAME_BITMAP_SIZE; n++){
-        byte_prueba = fgetc(memory);
-        bin(byte_prueba, 8);
-        printf("\n");
+        byte = fgetc(memory);
+        for (int i = 0; i < 8; i++)
+        {
+            bit_buscado = (byte >> (7-i)) & uno;
+            if (bit_buscado == cero)
+            {
+                bits_pasados = n * 8;
+                bits_pasados = bits_pasados + i;
+                change_frame_bit_map(bits_pasados);
+                return bits_pasados;
+            }   
+        }
     }
+    printf("No hay frames disponibles\n");
+    fclose(memory);
+    return NULL;
 }
 
 void change_frame_bit_map(unsigned char posicion){
+    //Esta funcion recibe una posicion del frame bit map
+    //hay 128 posiciones, del 0 al 127
+    //Y cambia esa posicion de 1 a 0 o de 0 a 1 segun corresponda
     FILE * memory = fopen(MEMORY_PATH, "r+b");
     fseek(memory, PCB_SIZE, SEEK_CUR);
     unsigned int posicion_byte;
+    unsigned char byte;
+    unsigned char posicion_relativa;
+    unsigned char byte_resta;
+    unsigned char bit_buscado;
+    unsigned char uno = 0x01;
+
     posicion_byte = posicion / 8;
-    printf("Acceder a byte %d para encontrar posicion %d\n", posicion_byte, posicion);
-    for (int i = 0; i < posicion_byte; i++)
+    while (posicion_byte != 0)
     {
-        
+        fseek(memory, PAGE_TABLE_ENTRY_SIZE, SEEK_CUR);
+        posicion_byte--;
+        posicion = posicion - 8;
     }
-    
+    posicion_relativa = 7 - posicion;
+    byte_resta = pow(2, posicion_relativa);
+    byte = fgetc(memory);
+    bit_buscado = (byte >> posicion_relativa) & uno;
+    if (bit_buscado == uno)
+    {
+        byte = byte - byte_resta;
+    }
+    else{
+        byte = byte + byte_resta;
+    }
+    fseek(memory,-1L,SEEK_CUR);
+    fwrite(&byte, sizeof(unsigned char), 1, memory);
+    fclose(memory);
 }
 
 void print_frame_bit_map(){
+    //Esta funcion imprime en consola el frame bit map
     FILE * memory = fopen(MEMORY_PATH, "r+b");
     fseek(memory, PCB_SIZE, SEEK_CUR);
     unsigned char byte;
@@ -624,4 +729,81 @@ void print_frame_bit_map(){
         bin(byte, 8);
         printf("\n");
     }
+    fclose(memory);
+}
+
+void link_new_page_to_empty_frame(unsigned char VPN, unsigned int PID){
+    FILE * memory = fopen(MEMORY_PATH, "r+b");
+    unsigned char PFN;
+
+    //Encontramos el primer frame libre y lo reservamos para esta page
+    //Tambien se cambia el valor en el frame bit map a 1
+    PFN = find_empty_frame();
+    printf("PFN es : %d\n", PFN);
+
+    unsigned int process_id_uint;
+    unsigned char process_state;
+
+    for (int i=0; i < PCB_N_ENTRIES; i++){
+
+        // estado del proceso
+        fread(&process_state,PROCESS_STATE_SIZE,1,memory);
+        // id del proceso 
+        process_id_uint = fgetc(memory);
+        // saltamos su nombre
+        fseek(memory,NAMES_SIZE,SEEK_CUR);
+
+        // si el proceso esta cargado y tiene id igual al buscado
+        if (process_state == (unsigned char)0x01 && process_id_uint == (unsigned int) PID){
+            //Nos saltamos las entradas de archivos hasta llegar a la tabla de paginas
+            fseek(memory, PROCESS_N_FILES_ENTRIES*PROCESS_FILE_ENTRY_SIZE, SEEK_CUR);
+            //Avanzamos al entry dado por VPN
+            fseek(memory, VPN*PAGE_TABLE_ENTRY_SIZE, SEEK_CUR);
+            //Agregamos bit de validez a la entrada
+            PFN = PFN + 0x80;
+            printf("Nuevo valor de entrada: %d\n", PFN);
+            fwrite(&PFN, sizeof(unsigned char), 1, memory);
+        } else {
+            // Nos saltamos todas las entradas del proceso y dejamos el puntero en la siguiente entrada de al PCB
+            fseek(memory,PROCESS_N_FILES_ENTRIES*PROCESS_FILE_ENTRY_SIZE + PAGE_TABLE_ENTRY_SIZE*PAGE_TABLE_N_ENTRIES,SEEK_CUR);
+        }
+    }
+    fclose(memory);
+}
+
+void print_page_table(unsigned int PID){
+    FILE * memory = fopen(MEMORY_PATH, "r+b");
+
+    unsigned int process_id_uint;
+    unsigned char process_state;
+    unsigned char byte;
+
+    for (int i=0; i < PCB_N_ENTRIES; i++){
+
+        // estado del proceso
+        fread(&process_state,PROCESS_STATE_SIZE,1,memory);
+        // id del proceso 
+        process_id_uint = fgetc(memory);
+        // saltamos su nombre
+        fseek(memory,NAMES_SIZE,SEEK_CUR);
+
+        // si el proceso esta cargado y tiene id igual al buscado
+        if (process_state == (unsigned char)0x01 && process_id_uint == (unsigned int) PID){
+            fseek(memory, PROCESS_N_FILES_ENTRIES*PROCESS_FILE_ENTRY_SIZE, SEEK_CUR);
+            for (int k = 0; k < PAGE_TABLE_N_ENTRIES; k++)
+            {
+                byte = fgetc(memory);
+                printf("Entrada de Page table: ");
+                bin(byte, 8);
+                printf("\n");
+            }
+            fclose(memory);
+            return;
+        } 
+        else {
+            // Nos saltamos todas las entradas del proceso y dejamos el puntero en la siguiente entrada de al PCB
+            fseek(memory,PROCESS_N_FILES_ENTRIES*PROCESS_FILE_ENTRY_SIZE + PAGE_TABLE_ENTRY_SIZE*PAGE_TABLE_N_ENTRIES,SEEK_CUR);
+        }
+    }
+    fclose(memory);
 }
