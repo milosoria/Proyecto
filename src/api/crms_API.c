@@ -22,9 +22,7 @@ CrmsFile * init_crms_file(unsigned int virtual_dir, unsigned int process_id, uns
     crms -> virtual_dir = virtual_dir;
     crms -> size = size;
     // Los siguientes parten en 0, si inicializan con cr_conseguir_dir
-    crms -> last_pos = 0;
     crms -> dir = 0;
-    crms -> dir_page_table = 0;
     // Este se va llenando en cr_read.
     crms -> bytes_leidos = 0;
     
@@ -322,15 +320,15 @@ CrmsFile* cr_open(int process_id, char* file_name, char mode){
 /* 6.Por cada pagina perteneciente al archivo con el PFN obtienes exactamente el frame y al que pertenece la pagina. */
 /* 7.Entre el VPN, y el PFN de cada pagina sabes cuales frames leer y cuanto leer. */
 
-int cr_write_file(CrmsFile* file_desc, void * buffer, int n_bytes){
-    // asumo que conseguir dir me retorna la direccion fisica, por ahora ocupo dir_page_table
-    FILE* memory = fopen(MEMORY_PATH,"r+b");
-    fseek(memory,file_desc->dir_page_table,SEEK_CUR);
-    unsigned int offset = va_offset(file_desc->virtual_dir);
-    printf("virtual_dir %i\n", file_desc->virtual_dir);
-    printf("dir_page_table %i\n", file_desc->dir_page_table);
-    return 1;
-
+// int cr_write_file(CrmsFile* file_desc, void * buffer, int n_bytes){
+//     // asumo que conseguir dir me retorna la direccion fisica, por ahora ocupo dir_page_table
+//     FILE* memory = fopen(MEMORY_PATH,"r+b");
+//     fseek(memory,file_desc->dir_page_table,SEEK_CUR);
+//     unsigned int offset = va_offset(file_desc->virtual_dir);
+//     printf("virtual_dir %i\n", file_desc->virtual_dir);
+//     printf("dir_page_table %i\n", file_desc->dir_page_table);
+//     return 1;
+// }
 /* - [ ] int cr_write_file(CrmsFile\* file_desc, void \* buffer, int n_bytes):
  * Funcion para escribir archivos.
  * Escribe en el archivo representado por file_desc los n_bytes que se encuentran en la direccion indicada por buffer y
@@ -347,19 +345,21 @@ int cr_write_file(CrmsFile* file_desc, void * buffer, int n_bytes){
 /* y así mismo si tomas el proceso con mayor direccion virtual tienes por garantia de por como
  * se construye la direccion virutal que despues de ese proceso está todo vacío */
 
-}
+
 
 int cr_conseguir_dir( CrmsFile * file_desc){
     int process_id = file_desc -> process_id;
     char* file_name = file_desc -> file_name;
 
     unsigned int file_size = file_desc -> size;
-    unsigned int file_va = file_desc -> virtual_dir;
+    // Se obtiene el virtual por leer address del archivo
+    unsigned int file_va = file_desc -> virtual_dir + file_desc -> bytes_leidos;
 
     unsigned int vpn = va_vpn(file_va);
     unsigned int offset = va_offset(file_va);
 
     FILE * memory = fopen(MEMORY_PATH, "rb");
+    // Datos para llegar al Page Table
     unsigned char process_file[NAMES_SIZE];
     unsigned int process_id_uint;
     unsigned char file_state;
@@ -385,7 +385,6 @@ int cr_conseguir_dir( CrmsFile * file_desc){
             unsigned char entry;
 
             // Guardamos la dirección (en bytes de la page table).
-            file_desc -> dir_page_table = moves;
             for (int i = 0; i < PAGE_TABLE_N_ENTRIES; i++)
             {   
                 // DE ACÁ EN ADELANTE ESTOY ITERANDO POR LA PAGE TABLE
@@ -408,11 +407,12 @@ int cr_conseguir_dir( CrmsFile * file_desc){
                         file_desc -> pfn = pfn;
                         file_desc -> dir = dir;
                         // Fijamos la última posición leída a la dirección física inicial. 
-                        file_desc -> last_pos = dir;
-                        return -1;
+                        fclose(memory);
+                        return 0;
                     } else 
                     {
                         printf("ERROR: la entrada de la tabla de páginas no es válida.\n");
+                        fclose(memory);
                         return -1;    
                     }
                 }
@@ -433,58 +433,65 @@ int cr_conseguir_dir( CrmsFile * file_desc){
     return -1;
 }
 
-int cr_read(CrmsFile * file_desc, void* buffer, int n_bytes){
+int cr_read(CrmsFile * file_desc, char* buffer, int n_bytes){
     printf("CR_READ RUNNING\n");
     // Si la dirección física del archivo todavía no ha sido init.
-    if (!file_desc -> dir){
-        printf("\tEs primera vez que se lee este archivo, por lo que se buscará su dirección física.\n");
+    if (!file_desc -> bytes_leidos){
+        printf("\tEs primera vez que se lee este archivo (o se leyó antes, pero terminó de leerse completamente), por lo que se buscará su dirección física.\n");
         cr_conseguir_dir(file_desc);
-        printf("\t Dirección física encontrada: %u.\n", file_desc -> dir);
+        printf("\tDirección física encontrada: %u.\n", file_desc -> dir);
+    } else {
+        printf("\tEste archivo ya se ha leído antes.\n");
+        cr_conseguir_dir(file_desc);
+        printf("\tCantidad de bytes previamente leídos: %u.\n", file_desc -> bytes_leidos);
     }
 
     // Posición actual inicial -> última posición en la que se leyó el archivo.
-    unsigned int dir_actual = file_desc -> last_pos;
+    unsigned int dir_actual = file_desc -> dir;
     
-    printf("\tDIR INICIAL: %u\tEn Binario: ", dir_actual);
-    bin(dir_actual, 32);
-    printf("\n");
+    printf("\tDIR INICIAL: %u\n", dir_actual);
 
-    printf("\tBytes por leer: %d.\n", n_bytes);
+    printf("\tBytes por leer en esta llamada: %d.\n", n_bytes);
 
+    printf("\t-- BEGIN FOR --\n");
+
+    // Abrimos el archivo de memoria
+    FILE * memory = fopen(MEMORY_PATH, "rb");
+    // Definimos el dato de memoria que se va a guardar.
+    unsigned char dato;
     // Tenemos que leer la cantidad de bytes.
     for (int i = 1; i < n_bytes + 1; i++)
     {
+        // Encontramos la nueva dir_actual.
+        cr_conseguir_dir(file_desc);
+        dir_actual = file_desc -> dir;
+        // Nos movemos a la dirección física.
+        fseek(memory, dir_actual, SEEK_SET);
+        // Extreamos byte de memoria de archivo.
+        fread(&dato, 1, 1, memory);
+        // Guardamos el dato en la posición bytes_leidos del buffer. 
+        buffer[file_desc->bytes_leidos] = dato;
+
         file_desc -> bytes_leidos += 1;
-
-        // >> ACTUALIZAR LAST_POS y DIR_ACTUAL
-        file_desc -> last_pos += 1;
-
-        // >> LEER/GUARDAR BYTE EN BUFFER
-        
-
-
-
         //REVISAR SI SE LLEGA AL FINAL DEL ARCHIVO
         // Revisamos si se llega al final del archivo.
         if (file_desc -> bytes_leidos == file_desc -> size){
-            printf("\tSe ha llegado hasta el final del archivo.\n");
-
+            printf("\t-- END FILE --\n");
+            printf("Se ha llegado hasta el final del archivo.\nReseteando sus bytes_leidos a 0.\n");
+            file_desc -> bytes_leidos = 0;
             // Retornamos la cantidad de bytes leídos hasta ahora por esta llamada.
-            printf("CR_READ END. Bytes leídos: %d.", i);
+            printf("CR_READ END. Bytes leídos (output): %d.\n", i);
+            fclose(memory);
              return i;
         }
-
-        //printf(" DIR ACTUAL: %u\n En Binario: ", dir_actual);
-        //bin(dir_actual, 32);
-        //printf("\n");
     }
     // Si termina el for, es por que se leyeron todos los bytes por leer del input 'n_bytes'.
     // Así, termina la función retornando la totalidad de bytes leídos (que es igual a 'n_bytes').
-    printf("\tSe han leído los %d bytes.\n", n_bytes);
-    printf("CR_READ END. Bytes leídos: %d.\n", n_bytes);
+    printf("\t-- END FOR --\n");
+    printf("Se han leído los %d bytes.\n", n_bytes);
+    printf("CR_READ END. Bytes leídos (output): %d.\n", n_bytes);
+    fclose(memory);
     return n_bytes;
-
-
 }
 
 void cr_delete(CrmsFile * file_desc){
@@ -559,4 +566,24 @@ unsigned int find_empty_frame(){
         bin(byte_prueba, 8);
         printf("\n");
     }
+}
+
+void write_file_real(char* buffer, CrmsFile* file_desc){
+    // Imprime los contenidos de un CrmsFile (al que previamente se le leyó toda su info en buffer) 
+    // en un archivo de PATH = '../nombre_de_crmsfile'.
+    
+    printf("FILE NAME:%s\n", file_desc -> file_name);
+    int len = 3 + strlen(file_desc -> file_name);
+    printf("LEN:%i\n", len);
+    char prefacio[len];
+    strcat(prefacio, "../");
+    strcat(prefacio, file_desc -> file_name);
+    printf("PREFACIO: %s\n", prefacio);
+    FILE* archivo = fopen(prefacio, "w");
+
+    printf("HOLA\n");
+    fwrite(buffer, 1, file_desc -> size, archivo);
+    printf("HOLA\n");
+
+    fclose(archivo);
 }
