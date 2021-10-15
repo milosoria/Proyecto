@@ -31,6 +31,7 @@ CrmsFile * init_crms_file(unsigned int virtual_dir, unsigned int process_id, uns
 }
 
 void destroy_crms_file(CrmsFile* file){
+    free(file->file_name);
     free(file);
 }
 
@@ -573,13 +574,10 @@ void write_file_real(char* buffer, CrmsFile* file_desc){
     // en un archivo de PATH = '../nombre_de_crmsfile'.
     
     printf("FILE NAME:%s\n", file_desc -> file_name);
-    int len = 3 + strlen(file_desc -> file_name);
-    printf("LEN:%i\n", len);
-    char prefacio[len];
-    strcat(prefacio, "../");
-    strcat(prefacio, file_desc -> file_name);
-    printf("PREFACIO: %s\n", prefacio);
-    FILE* archivo = fopen(prefacio, "w");
+    //char prefacio[len];
+    //strcat(prefacio, "../");
+    //printf("PREFACIO: %s\n", prefacio);
+    FILE* archivo = fopen(file_desc->file_name, "wb");
 
     printf("HOLA\n");
     fwrite(buffer, 1, file_desc -> size, archivo);
