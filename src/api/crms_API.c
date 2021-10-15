@@ -228,7 +228,7 @@ void cr_finish_process(int process_id){
     printf("CR_FINISH_PROCESS RUNNING\n");
     FILE * memory = fopen(MEMORY_PATH, "r+b");
     unsigned char process_state;
-    unsigned int process_id_uint;
+    unsigned char process_id_uint;
     unsigned char init_state = 0x01;
     unsigned char init_valid = 0x00;
 
@@ -238,13 +238,7 @@ void cr_finish_process(int process_id){
         if (process_state == (unsigned char)0x01){
             // Obtenemos el pid
             fread(&process_id_uint, PROCESS_ID_SIZE, 1, memory);
-            printf("PID: %u\n", process_id_uint);
-            bin(process_id_uint, 8);
-            printf("\n");
-            printf("PID: %u\n", process_id);
-            bin(process_id, 8);
-            printf("\n");
-            if (process_id_uint == (unsigned int)process_id){
+            if (process_id_uint == (unsigned char)process_id){
                 printf("\tFOUND THE PROCESS ID: %i\n", process_id);
                 //Retrocedo 2 para llegar al bit de validez y lo cambio a 0
                 fseek(memory,-1L,SEEK_CUR);
