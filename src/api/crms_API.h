@@ -27,6 +27,8 @@ typedef struct crmsfile {
     unsigned int process_id;
     // size del archivo
     unsigned int size;
+    // dirección física
+    unsigned int dir;
     // útlima posición leída
     unsigned int last_pos;
 } CrmsFile;

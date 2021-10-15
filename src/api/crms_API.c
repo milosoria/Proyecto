@@ -306,14 +306,17 @@ int cr_read(CrmsFile * file_desc, void* buffer, int n_bytes){
     int process_id = file_desc -> process_id;
     char* file_name = file_desc -> file_name;
 
+    unsigned int file_size = file_desc -> size;
+    unsigned int file_va = file_desc -> virtual_dir;
+
+    unsigned int vpn = va_vpn(file_va);
+    unsigned int offset = va_offset(file_va);
+
     FILE * memory = fopen(MEMORY_PATH, "rb");
     unsigned char process_file[NAMES_SIZE];
     unsigned int process_id_uint;
     unsigned char file_state;
     unsigned char process_state;
-
-    unsigned int file_size;
-    unsigned int file_va;
 
     unsigned int moves;
 
@@ -334,15 +337,32 @@ int cr_read(CrmsFile * file_desc, void* buffer, int n_bytes){
             fseek(memory,PROCESS_N_FILES_ENTRIES*PROCESS_FILE_ENTRY_SIZE,SEEK_CUR);
             unsigned int entry;
             for (int i = 0; i < PAGE_TABLE_N_ENTRIES; i++)
-            {
+            {   
+                // DE ACÁ EN ADELANTE ESTOY ITERANDO POR LA PAGE TABLE
                 fread(&entry, PAGE_TABLE_ENTRY_SIZE,1,memory);
-                
-                unsigned int validez = ta_validez(entry);
-                unsigned int pfn = ta_pfn(entry);
-                
                 printf("\tPAGE ENTRY %d: %u\n", i, entry);
+                if (i == vpn)
+                {
+                    unsigned int validez = ta_validez(entry);
+                    if (validez == (unsigned char)0x01)
+                    {
+                        unsigned int pfn = ta_pfn(entry);
+                        unsigned int dir_fisica;
+
+                        // Concatenamos los bits pfn con offset para hacer la dirección física.
+                        pfn = pfn << 23;
+                        dir_fisica = pfn + offset;
+
+                        // Le sumamos los 4KB de la PCB y los 16B del Frame Bitmap
+                        unsigned int dir = dir_fisica + PCB_SIZE + FRAME_BITMAP_SIZE;
+                        return -1;
+                    } else 
+                    {
+                        printf("ERROR: la entrada de la tabla de páginas no es válida.\n");
+                        return -1;    
+                    }
+                }
             }
-            exit(0);
             fclose(memory);
             printf("ERROR: el archivo por leer no existe.\n");
             return -1;
@@ -380,7 +400,7 @@ unsigned int ta_validez(unsigned int table_entry){
 }
 
 unsigned int ta_pfn(unsigned int table_entry){
-    unsigned int pfn = table_entry & 63;
+    unsigned int pfn = table_entry & 127;
     return pfn;
 }
 
