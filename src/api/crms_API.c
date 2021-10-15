@@ -533,7 +533,7 @@ void cr_delete(CrmsFile * file_desc){
                     printf("\tFILE %s STATE 0x%02x\n",process_file,file_state);
                     // comprobamos si es el que buscamos
                     printf("\tFILE FOUND %s\n", process_file);
-                    // BORRAR ACÁ
+                    // SEGUIR ACÁ
                     for (int i = 0; i < 13; i++)
                     {
                         // Volvemos para atrás 1 vez, 13 veces en total.
