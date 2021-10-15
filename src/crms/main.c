@@ -14,14 +14,14 @@ int main( int argc, char**argv){
     unsigned int size;
     
     cr_mount(memory_path);
-    cr_exists(0,"im_a_mp3.bin");
+    //cr_exists(0,"im_a_mp3.bin");
     // cr_ls_files(0);
     //cr_ls_processes();
     //cr_start_process(69, "coloro");
     //cr_ls_processes();
-    //CrmsFile* crms_file = cr_open(0,"im_a_mp3.bin", 'r');
+    CrmsFile* crms_file = cr_open(0,"message.txt", 'r');
 
-    //cr_read(crms_file, malloc(crms_file->size), crms_file->size);
+    cr_read(crms_file, malloc(crms_file->size), crms_file->size);
 
-    //destroy_crms_file(crms_file);
+    destroy_crms_file(crms_file);
 }

@@ -141,7 +141,6 @@ int cr_exists(int process_id, char * file_name){
                 if (file_state ==  0x01){
                     printf("\tFILE %s STATE 0x%02x\n",process_file,file_state);
                     // comprobamos si es el que buscamos
-                    printf("STRCOMP OUTPUT: %i\n", strcmp((char *) process_file,file_name));
                     if (strcmp((char *) process_file,file_name) == 0){
                         printf("\tFILE FOUND %s\n", process_file);
                         // encontramos el archivo, entonces retornamos 1
@@ -439,10 +438,11 @@ int cr_read(CrmsFile * file_desc, void* buffer, int n_bytes){
     {
         file_desc -> bytes_leidos += 1;
 
-        // REVISAR SI HAY CAMBIO DE PÁGINA
+        // >> ACTUALIZAR LAST_POS y DIR_ACTUAL
+        file_desc -> last_pos += 1;
 
         // >> LEER/GUARDAR BYTE EN BUFFER
-        // >> ACTUALIZAR LAST_POS y DIR_ACTUAL
+        
 
 
 
