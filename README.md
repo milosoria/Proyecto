@@ -83,7 +83,12 @@ Implementacion de funciones para manipular archivos de procesos:
     - Se termina el espacio contiguo en la memoria virtual
     - Se escribieron los n_bytes
 
-- [ ] int cr_read( CrmsFile \* file_desc, void\* buffer, int n_bytes): Funcion para leer archivos. Lee los siguientes n_bytes desde el archivo representado por file_desc y los gurda en la direccion aputnada por buffer. Debe retornar la cantidad de Bytes que efectivamente leyo. La lectura se efectua recorriendo los frames donde se encuentra escrito su contenido, comenzando desde la ultima posicion leida por un llamado cr_read. (Variable global?)
+- [ ] int cr_read( CrmsFile \* file_desc, void\* buffer, int n_bytes): Funcion para leer archivos. Lee los siguientes n_bytes desde el archivo representado por file_desc y los gurda en la direccion aputnada por buffer. Debe retornar la cantidad de Bytes que efectivamente leyo. La lectura se efectua recorriendo los frames donde se encuentra escrito su contenido, comenzando desde la ultima posicion leida por un llamado cr_read.
+
+    - Detalles que se implementaron de la función que se debería mencionar:
+        * Si un archivo se lee completamente, pero todavía quedan bytes por leer de 'n_bytes', la función termina y retorna los bytes efectivamente leídos.
+        * Para el caso anterior, la función también cambia el atributo 'bytes_leidos' del CrmsFile para que se pueda leer de nuevo.
+        * SIEMPRE  el 'buffer' es un malloc con size = CmrsFile -> size.
 
 - [ ] void cr_delete(CrmsFile \* file_desc): Funcion para liberar memoria de un archivo perteneciente a un proceso con id process_id. Para esto el archivo debe dejar de aparecer en la memoria virtual del proceso, ademas, si los frames quedan totalmente libres se debe indicar en el frame bitmap que ese frame ya no esta siendo utilizado e invalidar la entrada en la PCB.
 
