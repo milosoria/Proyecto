@@ -30,9 +30,9 @@ CrmsFile * init_crms_file(unsigned int virtual_dir, unsigned int process_id, uns
     return crms;
 }
 
-void destroy_crms_file(CrmsFile* file){
-    free(file->file_name);
-    free(file);
+void cr_close(CrmsFile* file_desc){
+    free(file_desc->file_name);
+    free(file_desc);
 }
 
 // Funciones Generales
@@ -498,8 +498,10 @@ int cr_read(CrmsFile * file_desc, char* buffer, int n_bytes){
 void cr_delete(CrmsFile * file_desc){
     return;
 }
+
 void cr_close(CrmsFile* file_desc){
-    return;
+    free(file_desc->file_name);
+    free(file_desc);
 }
 
 unsigned int va_offset(unsigned int file_va){

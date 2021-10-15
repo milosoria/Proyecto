@@ -35,7 +35,6 @@ typedef struct crmsfile {
 
 // Funciones para manejar struct
 CrmsFile * init_crms_file(unsigned int virtual_dir, unsigned int process_id, unsigned int size, char *file_name);
-void destroy_crms_file(CrmsFile* file);
 
 
 // Funciones Generales

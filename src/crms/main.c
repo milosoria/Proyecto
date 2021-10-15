@@ -36,5 +36,5 @@ int main( int argc, char**argv){
     write_file_real(entero, crms_file);
     free(entero);
     free(parcial);
-    destroy_crms_file(crms_file);
+    cr_close(crms_file);
 }
