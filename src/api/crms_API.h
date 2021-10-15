@@ -72,7 +72,12 @@ void bin(unsigned n, int m);
 void va_print(unsigned int file_va);
 
 //Coloro
-unsigned int find_empty_frame();
+unsigned char find_empty_frame();
+void change_frame_bit_map(unsigned char posicion);
+void print_frame_bit_map();
+void link_new_page_to_empty_frame(unsigned char VPN, unsigned int PID);
+void print_page_table(unsigned int PID);
 
 //Escribir en un file real
 void write_file_real(char* buffer, CrmsFile*);
+
