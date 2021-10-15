@@ -62,7 +62,7 @@ void cr_close(CrmsFile* file_desc);
 
 // Virtual Address
 unsigned int va_vpn(unsigned int file_va);
-unsigned int va_offset(unsigned int file_va);
+unsigned int get_offset(unsigned int file_va);
 
 // Page Table
 unsigned char ta_validez(unsigned char table_entry);
