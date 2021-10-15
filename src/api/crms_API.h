@@ -64,3 +64,6 @@ unsigned int va_vpn(unsigned int file_va);
 unsigned int va_offset(unsigned int file_va);
 void bin(unsigned n, int m);
 void va_print(unsigned int file_va);
+
+//Coloro
+unsigned int find_empty_frame();

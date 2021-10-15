@@ -181,16 +181,38 @@ void cr_start_process(int process_id, char * process_name){
             fwrite(&process_id, sizeof(unsigned char), 1, memory);
 
             // TODO: Esta bien esto para escribirlo en big endian?
+            /*
             for (int k=0; k < NAMES_SIZE;k++){
                 process_name_buff[k] = ((((process_name[k]) & 0xff) << 8) | ((process_name[k]) >> 8));
             }
 
             fwrite(process_name_buff, sizeof(unsigned char), NAMES_SIZE, memory);
+            */
+            size_t element_size = sizeof *process_name;
+            size_t elements_to_write = sizeof process_name;
+
+            fwrite(process_name, element_size, NAMES_SIZE, memory);
             printf("\tWRITING INFO NAME:%s AND PID:%i\n", process_name,process_id);
             for (int j=0; j < PROCESS_N_FILES_ENTRIES; j++){
+                //Cambiamos los bytes de validez de los archivos a 0x00
                 fwrite(&init_valid, sizeof(unsigned char), 1, memory);
                 //Pasamos a la siguiente entrada de archivos
-                fseek(memory,VIRTUAL_ADRESS_SIZE+PROCESS_FILE_SIZE,SEEK_CUR);
+                // Hay que saltarse Nombre + Tamaño + Direccion
+                fseek(memory,NAMES_SIZE+VIRTUAL_ADRESS_SIZE+PROCESS_FILE_SIZE,SEEK_CUR);
+            }
+            //Estamos en la tabla de paginas, debemos dejar bits de validez en 0
+            unsigned int byte_prueba;
+            for (int n=0; n < PAGE_TABLE_N_ENTRIES; n++){
+                //Cada entrada es de un byte, donode el primer bit debe ser 0 (bit de validez)
+                //y los siguientes 7 bits deben ser el PFN (que se obtiene del frame bit map)
+                byte_prueba = fgetc(memory);
+                if (byte_prueba > 127)
+                {
+                    byte_prueba = byte_prueba - 128;
+                }
+                // Nos devolvemos un byte, para sobrescribir el byte
+                fseek(memory,-1L,SEEK_CUR);
+                fwrite(&byte_prueba, 1, 1, memory);
             }
             fclose(memory);
             return;
@@ -198,7 +220,6 @@ void cr_start_process(int process_id, char * process_name){
         fseek(memory,PROCESS_ID_SIZE+NAMES_SIZE+PROCESS_N_FILES_ENTRIES*PROCESS_FILE_ENTRY_SIZE + PAGE_TABLE_ENTRY_SIZE*PAGE_TABLE_N_ENTRIES,SEEK_CUR);
     }
     fclose(memory);
-
 }
 
 void cr_finish_process(int process_id){
@@ -466,4 +487,15 @@ void bin(unsigned n, int m)
     unsigned i;
     for (i = 1 << (m-1); i > 0; i = i / 2)
         (n & i) ? printf("1") : printf("0");
+}
+
+unsigned int find_empty_frame(){
+    FILE * memory = fopen(MEMORY_PATH, "r+b");
+    fseek(memory, PCB_SIZE, SEEK_CUR);
+    unsigned int byte_prueba;
+    for (int n=0; n < FRAME_BITMAP_SIZE; n++){
+        byte_prueba = fgetc(memory);
+        bin(byte_prueba, 8);
+        printf("\n");
+    }
 }
