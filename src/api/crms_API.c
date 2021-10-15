@@ -22,6 +22,7 @@ CrmsFile * init_crms_file(unsigned int virtual_dir, unsigned int process_id, uns
     crms -> virtual_dir = virtual_dir;
     crms -> size = size;
     crms -> last_pos = 0;
+    crms -> bytes_leidos = 0;
     crms -> file_name = strdup(file_name);
     return crms;
 }
@@ -354,7 +355,6 @@ int cr_conseguir_dir( CrmsFile * file_desc){
         moves += NAMES_SIZE;
         // si el proceso esta cargado y tiene id igual al buscado
         if (process_state == (unsigned char)0x01 && process_id_uint == (unsigned int) process_id){
-            printf("\t[PID:%u] FOUND\n", process_id_uint);
             // recorremos las entradas de archivos
             fseek(memory,PROCESS_N_FILES_ENTRIES*PROCESS_FILE_ENTRY_SIZE,SEEK_CUR);
             unsigned int entry;
@@ -362,7 +362,6 @@ int cr_conseguir_dir( CrmsFile * file_desc){
             {   
                 // DE ACÁ EN ADELANTE ESTOY ITERANDO POR LA PAGE TABLE
                 fread(&entry, PAGE_TABLE_ENTRY_SIZE,1,memory);
-                printf("\tPAGE ENTRY %d: %u\n", i, entry);
                 if (i == vpn)
                 {
                     unsigned int validez = ta_validez(entry);
@@ -404,12 +403,54 @@ int cr_conseguir_dir( CrmsFile * file_desc){
 }
 
 int cr_read(CrmsFile * file_desc, void* buffer, int n_bytes){
+    printf("CR_READ RUNNING\n");
     // Si la dirección física del archivo todavía no ha sido init.
     if (!file_desc -> dir){
+        printf("\tEs primera vez que se lee este archivo, por lo que se buscará su dirección física.\n");
         cr_conseguir_dir(file_desc);
+        printf("\t Dirección física encontrada: %u.\n", file_desc -> dir);
     }
-    // Posición inicial -> última posición en la que se leyó el archivo.
-    printf("DIR: %u\n", file_desc->last_pos);
+
+    // Posición actual inicial -> última posición en la que se leyó el archivo.
+    unsigned int dir_actual = file_desc -> last_pos;
+    
+    printf("\tDIR INICIAL: %u\tEn Binario: ", dir_actual);
+    bin(dir_actual, 32);
+    printf("\n");
+
+    printf("\tBytes por leer: %d.\n", n_bytes);
+
+    // Tenemos que leer la cantidad de bytes.
+    for (int i = 1; i < n_bytes + 1; i++)
+    {
+        file_desc -> bytes_leidos += 1;
+
+        // REVISAR SI HAY CAMBIO DE PÁGINA
+
+        // >> LEER/GUARDAR BYTE EN BUFFER
+        // >> ACTUALIZAR LAST_POS y DIR_ACTUAL
+
+
+
+        //REVISAR SI SE LLEGA AL FINAL DEL ARCHIVO
+        // Revisamos si se llega al final del archivo.
+        if (file_desc -> bytes_leidos == file_desc -> size){
+            printf("\tSe ha llegado hasta el final del archivo.\n");
+
+            // Retornamos la cantidad de bytes leídos hasta ahora por esta llamada.
+            printf("CR_READ END. Bytes leídos: %d.", i);
+             return i;
+        }
+
+        //printf(" DIR ACTUAL: %u\n En Binario: ", dir_actual);
+        //bin(dir_actual, 32);
+        //printf("\n");
+    }
+    // Si termina el for, es por que se leyeron todos los bytes por leer del input 'n_bytes'.
+    // Así, termina la función retornando la totalidad de bytes leídos (que es igual a 'n_bytes').
+    printf("\tSe han leído los %d bytes.\n", n_bytes);
+    printf("CR_READ END. Bytes leídos: %d.\n", n_bytes);
+    return n_bytes;
 
 
 }

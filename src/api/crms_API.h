@@ -31,6 +31,8 @@ typedef struct crmsfile {
     unsigned int dir;
     // útlima posición leída
     unsigned int last_pos;
+    // cantidad de bytes leídos (recorridos)
+    unsigned int bytes_leidos;
 } CrmsFile;
 
 // Funciones para manejar struct
