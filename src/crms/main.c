@@ -14,13 +14,6 @@ int main( int argc, char**argv){
     unsigned int size;
     
     cr_mount(memory_path);
-    //cr_exists(0,"im_a_mp3.bin");
-    // cr_ls_files(0);
-    //cr_ls_processes();
-    //cr_start_process(69, "coloro");
-    //cr_ls_processes();
-    CrmsFile* crms_file = cr_open(0,"secret.txt", 'r');
-
     // Los mallocs de buffer SIEMPRE se harán del tamaño total del archivo
     /* char* entero = malloc(crms_file -> size); */
     char* parcial = malloc(crms_file -> size);
@@ -39,5 +32,4 @@ int main( int argc, char**argv){
     /* free(entero); */
     /* free(parcial); */
     cr_close(crms_file);
-
 }
