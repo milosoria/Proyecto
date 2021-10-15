@@ -27,7 +27,7 @@ CrmsFile * init_crms_file(unsigned int virtual_dir, unsigned int process_id, uns
     crms -> dir_page_table = 0;
     // Este se va llenando en cr_read.
     crms -> bytes_leidos = 0;
-    
+
     crms -> file_name = strdup(file_name);
     return crms;
 }
@@ -270,10 +270,10 @@ CrmsFile* cr_open(int process_id, char* file_name, char mode){
 
                             fread(&file_va,VIRTUAL_ADRESS_SIZE,1,memory);
                             file_va = (unsigned int) bswap_32(file_va);
-                    // le sumamos todos los bytes de las subentradas de archivos 10 subentradas * 21 bytes por subentrada.
+                            // le sumamos todos los bytes de las subentradas de archivos 10 subentradas * 21 bytes por subentrada.
                             printf("\tSIZE: %u\n", file_size);
                             printf("\tVA: %u\n", file_va);
-                            
+
                             crms_file = init_crms_file(file_va, process_id_uint, file_size, file_name);
                             fclose(memory);
                             return crms_file;
@@ -281,7 +281,7 @@ CrmsFile* cr_open(int process_id, char* file_name, char mode){
                             // dejamos el puntero en la siguiente entrada si es que quedan entradas
                             fseek(memory,PROCESS_FILE_SIZE+VIRTUAL_ADRESS_SIZE,SEEK_CUR);
                         }
-                        
+
                     }
                     // Si no encontramos el archivo, retornamos ERROR
                     fclose(memory);
@@ -296,7 +296,7 @@ CrmsFile* cr_open(int process_id, char* file_name, char mode){
             fclose(memory);
             printf("ERROR: el proceso por leer no existe.\n");
             return -1;
-            
+
         } else if (mode == 'w') {
             // error pq el archivo ya exite
             printf("ERROR: se está creando un archivo que ya existe.\n");
@@ -311,6 +311,7 @@ CrmsFile* cr_open(int process_id, char* file_name, char mode){
             return NULL;
         }
     }
+    return NULL;
 }
 
 /* 1.Lees de entrada en entrada del proceso (mediante el uso de fseek y fread) */
@@ -321,29 +322,64 @@ CrmsFile* cr_open(int process_id, char* file_name, char mode){
 /* 7.Entre el VPN, y el PFN de cada pagina sabes cuales frames leer y cuanto leer. */
 
 int cr_write_file(CrmsFile* file_desc, void * buffer, int n_bytes){
+
+    /* * Funcion para escribir archivos. */
+    /* * Escribe en el archivo representado por file_desc los n_bytes que se encuentran en la direccion indicada por buffer y */
+    /* * retorna la cantidad de Bytes escritos en el archivo (en caso de no terminar). La escritura comienza desde el primer espacio libre (IMPORTANTE) */
+    /* * dentro de la memoria virtual. La escritura termina cuando: *1/ */
+    printf("CR_WRITE_FILE RUNNING\n");
     // asumo que conseguir dir me retorna la direccion fisica, por ahora ocupo dir_page_table
     FILE* memory = fopen(MEMORY_PATH,"r+b");
-    fseek(memory,file_desc->dir_page_table,SEEK_CUR);
+    // posicion en la page table
+    unsigned int vpn = va_vpn(file_desc->virtual_dir);
     unsigned int offset = va_offset(file_desc->virtual_dir);
-    printf("virtual_dir %i\n", file_desc->virtual_dir);
-    printf("dir_page_table %i\n", file_desc->dir_page_table);
+
+    unsigned char process_name[NAMES_SIZE];
+    unsigned char page_table_entry;
+    unsigned int process_id_uint;
+
+    for (int i=0; i < PCB_N_ENTRIES; i++){
+        fseek(memory,PROCESS_STATE_SIZE,SEEK_CUR); 
+        process_id_uint = fgetc(memory);
+        // obtenemos el nombre del proceso
+        fread(process_name,NAMES_SIZE,1,memory);
+        if (process_id_uint == (unsigned int)file_desc->process_id){
+            // encontre el id del proceso, entonces reviso todas sus entradas de archivos
+            // recorremos las entradas de archivos
+            fseek(memory,PROCESS_FILE_ENTRY_SIZE*PROCESS_FILE_SIZE,SEEK_CUR);
+            for (int j=0; j < PAGE_TABLE_N_ENTRIES; j++){
+                fread(&page_table_entry,PAGE_TABLE_ENTRY_SIZE,1,memory);
+                // esta es la entrada que le corresponde al archivo
+                if (j == vpn){
+                    unsigned int pfn = ta_pfn(page_table_entry);
+                    // flujo principal aca
+                    return n_bytes;
+                }
+            }
+            return 0;
+        }
+        fseek(memory,PROCESS_N_FILES_ENTRIES*PROCESS_FILE_ENTRY_SIZE + PAGE_TABLE_ENTRY_SIZE*PAGE_TABLE_N_ENTRIES,SEEK_CUR);
+    }
+
+    /* Con la direccion virtual de cada archivo tienes la página y el offset y aparte tienes el tamaño del proceso */
+    /* Sabes que las paginas tienen asociado un frame único a ellas */
+    /* asi que si analizas todas las entradas validas puedes saber, haciendo uso de la pagina y los offset y los tamaños que espacios vacios hay y donde */
+    /* y así mismo si tomas el proceso con mayor direccion virtual tienes por garantia de por como se construye la direccion virutal que despues de ese proceso está todo vacío */
+
+    // tengo la maxima direccion virtual y obtengo de esta, su offset, si el offset es 0, entonces la pagina esta vacia
+    // comprobar que la direccion virtual no es mayor al size maximo de la memoria
+    fclose(memory);
     return 1;
 
-/* - [ ] int cr_write_file(CrmsFile\* file_desc, void \* buffer, int n_bytes):
- * Funcion para escribir archivos.
- * Escribe en el archivo representado por file_desc los n_bytes que se encuentran en la direccion indicada por buffer y
- * retorna la cantidad de Bytes escritos en el archivo (en caso de no terminar). La escritura comienza desde el primer espacio libre (IMPORTANTE)
- * dentro de la memoria virtual. La escritura termina cuando: */
+    /*     - No quedan frames disponibles para continuar */
+    /*     - Se termina el espacio contiguo en la memoria virtual */
+    /*     - Se escribieron los n_bytes */
 
-/*     - No quedan frames disponibles para continuar */
-/*     - Se termina el espacio contiguo en la memoria virtual */
-/*     - Se escribieron los n_bytes */
-
-/* Con la direccion virtual de cada archivo tienes la página y el offset y aparte tienes el tamaño del proceso */
-/* Sabes que las paginas tienen asociado un frame único a ellas */
-/* asi que si analizas todas las entradas validas puedes saber, haciendo uso de la pagina y los offset y los tamaños que espacios vacios hay y donde */
-/* y así mismo si tomas el proceso con mayor direccion virtual tienes por garantia de por como
- * se construye la direccion virutal que despues de ese proceso está todo vacío */
+    /* Con la direccion virtual de cada archivo tienes la página y el offset y aparte tienes el tamaño del proceso */
+    /* Sabes que las paginas tienen asociado un frame único a ellas */
+    /* asi que si analizas todas las entradas validas puedes saber, haciendo uso de la pagina y los offset y los tamaños que espacios vacios hay y donde */
+    /* y así mismo si tomas el proceso con mayor direccion virtual tienes por garantia de por como
+     * se construye la direccion virutal que despues de ese proceso está todo vacío */
 
 }
 
@@ -442,7 +478,7 @@ int cr_read(CrmsFile * file_desc, void* buffer, int n_bytes){
 
     // Posición actual inicial -> última posición en la que se leyó el archivo.
     unsigned int dir_actual = file_desc -> last_pos;
-    
+
     printf("\tDIR INICIAL: %u\tEn Binario: ", dir_actual);
     bin(dir_actual, 32);
     printf("\n");
@@ -468,7 +504,7 @@ int cr_read(CrmsFile * file_desc, void* buffer, int n_bytes){
 
             // Retornamos la cantidad de bytes leídos hasta ahora por esta llamada.
             printf("CR_READ END. Bytes leídos: %d.", i);
-             return i;
+            return i;
         }
 
         //printf(" DIR ACTUAL: %u\n En Binario: ", dir_actual);
@@ -534,13 +570,13 @@ void va_print(unsigned int file_va){
 }
 
 void bin(unsigned n, int m)
-// Imprime "m" bits de un decimal "n" en binario.
-// Ej: bin(89216, 32)
-//  > "00000000000000010101110010000000"
-// Ej: bin(89216, 23)
-//  > "00000010101110010000000"
-// Ej: bin(0, 5)
-//  > "00000"
+    // Imprime "m" bits de un decimal "n" en binario.
+    // Ej: bin(89216, 32)
+    //  > "00000000000000010101110010000000"
+    // Ej: bin(89216, 23)
+    //  > "00000010101110010000000"
+    // Ej: bin(0, 5)
+    //  > "00000"
 {
     unsigned i;
     for (i = 1 << (m-1); i > 0; i = i / 2)
