@@ -324,7 +324,7 @@ CrmsFile* cr_open(int process_id, char* file_name, char mode){
 
 int cr_write_file(CrmsFile* file_desc, void * buffer, int n_bytes){}
 
-int cr_read(CrmsFile * file_desc, void* buffer, int n_bytes){
+int cr_conseguir_dir( CrmsFile * file_desc){
     int process_id = file_desc -> process_id;
     char* file_name = file_desc -> file_name;
 
@@ -374,9 +374,12 @@ int cr_read(CrmsFile * file_desc, void* buffer, int n_bytes){
                         // Concatenamos los bits pfn con offset para hacer la dirección física.
                         pfn = pfn << 23;
                         dir_fisica = pfn + offset;
-
+                        bin(dir_fisica, 32);
                         // Le sumamos los 4KB de la PCB y los 16B del Frame Bitmap
                         unsigned int dir = dir_fisica + PCB_SIZE + FRAME_BITMAP_SIZE;
+
+
+                        file_desc -> dir = dir;
                         return -1;
                     } else 
                     {
@@ -397,6 +400,10 @@ int cr_read(CrmsFile * file_desc, void* buffer, int n_bytes){
     fclose(memory);
     printf("ERROR: el proceso por leer no existe.\n");
     return -1;
+}
+
+int cr_read(CrmsFile * file_desc, void* buffer, int n_bytes){
+    
 }
 
 void cr_delete(CrmsFile * file_desc){
