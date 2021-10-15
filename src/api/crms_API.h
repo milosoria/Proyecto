@@ -29,12 +29,10 @@ typedef struct crmsfile {
     unsigned int size;
     // útlima posición leída
     unsigned int last_pos;
-    // cantidad de fseek y fread hechas (en bytes) para llegar a la tabla de páginas del proceso del archivo.
-    unsigned int moves;
 } CrmsFile;
 
 // Funciones para manejar struct
-CrmsFile * init_crms_file(unsigned int virtual_dir, unsigned int process_id, unsigned int size, unsigned int moves, char *file_name);
+CrmsFile * init_crms_file(unsigned int virtual_dir, unsigned int process_id, unsigned int size, char *file_name);
 void destroy_crms_file(CrmsFile* file);
 
 
@@ -60,7 +58,13 @@ int cr_read( CrmsFile * file_desc, void* buffer, int n_bytes);
 void cr_delete(CrmsFile * file_desc);
 void cr_close(CrmsFile* file_desc);
 
+// Virtual Address
 unsigned int va_vpn(unsigned int file_va);
 unsigned int va_offset(unsigned int file_va);
+
+// Page Table
+unsigned int ta_validez(unsigned int table_entry);
+unsigned int ta_pfn(unsigned int table_entry);
+
 void bin(unsigned n, int m);
 void va_print(unsigned int file_va);
