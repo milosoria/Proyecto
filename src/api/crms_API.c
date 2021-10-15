@@ -323,9 +323,13 @@ CrmsFile* cr_open(int process_id, char* file_name, char mode){
 /* 7.Entre el VPN, y el PFN de cada pagina sabes cuales frames leer y cuanto leer. */
 
 int cr_write_file(CrmsFile* file_desc, void * buffer, int n_bytes){
+    // IMPORTANTE: CABE RECALCAR QUE LOS ARCHIVOS PARTEN CON SIZE 0 Y LUEGO SU SIZE CRECE A MEDIDA QUE SE ESCRIBE.
+    // TODO: 
+    //   - Identificar si existe otro archivo en las proximas direcciones, "cortando" la memoria continua
+
     printf("CR_WRITE_FILE RUNNING\n");
 
-    unsigned int dir_actual = file_desc -> dir;
+    unsigned int dir_actual= file_desc->dir; 
     unsigned int offset;
     
     printf("\tDIR INICIAL: %u\n", dir_actual);
@@ -339,52 +343,55 @@ int cr_write_file(CrmsFile* file_desc, void * buffer, int n_bytes){
     for (int i = 1; i < n_bytes + 1; i++)
     {
         // Encontramos la nueva dir_actual.
-        cr_conseguir_dir(file_desc);
+        cr_conseguir_dir(file_desc,'w');
         dir_actual = file_desc -> dir;
         // funcion para obtener offset
         offset = get_offset(dir_actual);
+        printf("\t DIR_ACTUAL %u AND OFFSET %u\n", dir_actual, offset);
+        return 1;
         if (offset == 0){
-            // nueva pagina
+            // verificar que la pagina este vacia
+            // El proceso comienza en una nueva pagina o nos cambiamos a una nueva pagina despues de escribir
             // conectamos un nuevo frame
-            // si no hay frames disponibles, entonces retornamos n_bytes - numero de bytes escritos
-        }else{
+
+            // CASOS DE TERMINO:
+                /* No quedan frames disponibles para continuar, o */
+                    /* - Si no hay frames disponibles, entonces retornamos file_desc -> size */ 
+                /* • Se termina el espacio contiguo en la memoria virtual, es lo mismo esto que no encontrar frames disponibles? */
+        } else{
             // seguimos en la misma pagina
             // nos movemos a la direccion fisica
             fseek(memory, dir_actual, SEEK_SET);
-            fwrite();
-            //buffer[file_desc->bytes_leidos] = dato;
+            // escribimos un byte
+            fwrite(&buffer[file_desc->size], 1, 1, memory);
+            // actualizamos los bytes escritos
+            file_desc -> size += 1;
         }
 
-        file_desc -> bytes_leidos += 1;
-        //REVISAR SI SE LLEGA AL FINAL DEL ARCHIVO
-        // Revisamos si se llega al final del archivo.
-        if (file_desc -> bytes_leidos == file_desc -> size){
+        /* • SE ESCRIBIERON LOS N BYTES. */
+        if (file_desc -> size == n_bytes){
             printf("\t-- END FILE --\n");
-            printf("Se ha llegado hasta el final del archivo.\nReseteando sus bytes_leidos a 0.\n");
-            file_desc -> bytes_leidos = 0;
-            // Retornamos la cantidad de bytes leídos hasta ahora por esta llamada.
-            printf("CR_READ END. Bytes leídos (output): %d.\n", i);
+            printf("Se han escrito %i bytes exitosamente\n", file_desc->size);
+            printf("CR_WRITE_FILE END. Bytes escritos (output): %i.\n", i);
             fclose(memory);
-             return i;
+            return i;
         }
     }
-    // Si termina el for, es por que se leyeron todos los bytes por leer del input 'n_bytes'.
-    // Así, termina la función retornando la totalidad de bytes leídos (que es igual a 'n_bytes').
     printf("\t-- END FOR --\n");
-    printf("Se han leído los %d bytes.\n", n_bytes);
-    printf("CR_READ END. Bytes leídos (output): %d.\n", n_bytes);
+    printf("Se han escrito los %d bytes.\n", n_bytes);
+    printf("CR_READ END. Bytes escritos (output): %d.\n", n_bytes);
     fclose(memory);
     return n_bytes;
 
 }
 
-int cr_conseguir_dir( CrmsFile * file_desc){
+int cr_conseguir_dir( CrmsFile * file_desc, char mode){
     int process_id = file_desc -> process_id;
     char* file_name = file_desc -> file_name;
 
     unsigned int file_size = file_desc -> size;
     // Se obtiene el virtual por leer address del archivo
-    unsigned int file_va = file_desc -> virtual_dir + file_desc -> bytes_leidos;
+    unsigned int file_va = file_desc -> virtual_dir + mode == 'w'?file_desc->size:file_desc -> bytes_leidos;
 
     unsigned int vpn = va_vpn(file_va);
     unsigned int offset = get_offset(file_va);
@@ -437,6 +444,7 @@ int cr_conseguir_dir( CrmsFile * file_desc){
 
                         file_desc -> pfn = pfn;
                         file_desc -> dir = dir;
+
                         // Fijamos la última posición leída a la dirección física inicial. 
                         fclose(memory);
                         return 0;
@@ -469,11 +477,11 @@ int cr_read(CrmsFile * file_desc, char* buffer, int n_bytes){
     // Si la dirección física del archivo todavía no ha sido init.
     if (!file_desc -> bytes_leidos){
         printf("\tEs primera vez que se lee este archivo (o se leyó antes, pero terminó de leerse completamente), por lo que se buscará su dirección física.\n");
-        cr_conseguir_dir(file_desc);
+        cr_conseguir_dir(file_desc,'r');
         printf("\tDirección física encontrada: %u.\n", file_desc -> dir);
     } else {
         printf("\tEste archivo ya se ha leído antes.\n");
-        cr_conseguir_dir(file_desc);
+        cr_conseguir_dir(file_desc,'r');
         printf("\tCantidad de bytes previamente leídos: %u.\n", file_desc -> bytes_leidos);
     }
 
@@ -494,7 +502,7 @@ int cr_read(CrmsFile * file_desc, char* buffer, int n_bytes){
     for (int i = 1; i < n_bytes + 1; i++)
     {
         // Encontramos la nueva dir_actual.
-        cr_conseguir_dir(file_desc);
+        cr_conseguir_dir(file_desc,'r');
         dir_actual = file_desc -> dir;
         // Nos movemos a la dirección física.
         fseek(memory, dir_actual, SEEK_SET);
