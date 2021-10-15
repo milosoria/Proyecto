@@ -30,11 +30,6 @@ CrmsFile * init_crms_file(unsigned int virtual_dir, unsigned int process_id, uns
     return crms;
 }
 
-void cr_close(CrmsFile* file_desc){
-    free(file_desc->file_name);
-    free(file_desc);
-}
-
 // Funciones Generales
 void cr_mount(char * memory_path){
     MEMORY_PATH = memory_path;
@@ -161,7 +156,6 @@ int cr_exists(int process_id, char * file_name){
     fclose(memory);
     return 0;
 }
-
 
 // Funciones Procesos
 void cr_start_process(int process_id, char * process_name){
@@ -348,12 +342,12 @@ CrmsFile* cr_open(int process_id, char* file_name, char mode){
 
 
 
-int cr_conseguir_dir( CrmsFile * file_desc){
+int cr_conseguir_dir(CrmsFile * file_desc){
     int process_id = file_desc -> process_id;
     char* file_name = file_desc -> file_name;
 
     unsigned int file_size = file_desc -> size;
-    // Se obtiene el virtual por leer address del archivo
+    // Se obtiene el virtual address por leer address del archivo
     unsigned int file_va = file_desc -> virtual_dir + file_desc -> bytes_leidos;
 
     unsigned int vpn = va_vpn(file_va);
@@ -430,7 +424,7 @@ int cr_conseguir_dir( CrmsFile * file_desc){
     }
     // Si no encontramos el proceso, retornamos ERROR
     fclose(memory);
-    printf("ERROR: el proceso por leer no existe.\n");
+    printf("ERROR: el proceso del archivo no existe.\n");
     return -1;
 }
 
@@ -496,7 +490,112 @@ int cr_read(CrmsFile * file_desc, char* buffer, int n_bytes){
 }
 
 void cr_delete(CrmsFile * file_desc){
-    return;
+    printf("CR_DELETE RUNNING\n");
+    int process_id = file_desc -> process_id;
+    char* file_name = file_desc -> file_name;
+
+    unsigned int file_size = file_desc -> size;
+    // Se obtiene el virtual por leer address del archivo
+    unsigned int file_va = file_desc -> virtual_dir + file_desc -> bytes_leidos;
+
+    unsigned int vpn = va_vpn(file_va);
+    unsigned int offset = get_offset(file_va);
+
+    FILE * memory = fopen(MEMORY_PATH, "r+b");
+    // Datos para llegar al Page Table
+    unsigned char process_file[NAMES_SIZE];
+    unsigned int process_id_uint;
+    unsigned char file_state;
+    unsigned char process_state;
+
+    unsigned int moves = 0;
+
+    for (int i=0; i < PCB_N_ENTRIES; i++){
+        // estado del proceso
+        fread(&process_state,PROCESS_STATE_SIZE,1,memory);
+        moves += PROCESS_STATE_SIZE;
+        // id del proceso 
+        process_id_uint = fgetc(memory);
+        moves += 1;
+        // saltamos su nombre
+        fseek(memory,NAMES_SIZE,SEEK_CUR);
+        moves += NAMES_SIZE;
+        // si el proceso esta cargado y tiene id igual al buscado
+        if (process_state == (unsigned char)0x01 && process_id_uint == (unsigned int) process_id){
+            // recorremos las entradas de archivos
+            for (int j=0; j < PROCESS_N_FILES_ENTRIES; j++){
+                // estado del archivo
+                fread(&file_state,1,1,memory);
+                // nombre del archivo
+                fread(process_file,NAMES_SIZE,1,memory); 
+                // si el archivo esta cargado
+                if (file_state ==  0x01 && strcmp((char *) process_file,file_name) == 0){
+                    printf("\tFILE %s STATE 0x%02x\n",process_file,file_state);
+                    // comprobamos si es el que buscamos
+                    printf("\tFILE FOUND %s\n", process_file);
+                    // BORRAR ACÁ
+                    for (int i = 0; i < 13; i++)
+                    {
+                        // Volvemos para atrás 1 vez, 13 veces en total.
+                        fseek(memory,-1L,SEEK_CUR);
+                    }
+                    fseek(memory,NAMES_SIZE,SEEK_CUR);
+                        
+                } else {
+                    // Esta subentrada no nos sirve, por lo que nos saltamos a la próxima.
+                    fseek(memory,PROCESS_FILE_ENTRY_SIZE,SEEK_CUR);
+                }
+                // EDITAR
+                fseek(memory,PROCESS_FILE_SIZE+VIRTUAL_ADRESS_SIZE,SEEK_CUR); 
+            }
+            unsigned char entry;
+
+            for (int i = 0; i < PAGE_TABLE_N_ENTRIES; i++)
+            {   
+                // DE ACÁ EN ADELANTE ESTOY ITERANDO POR LA PAGE TABLE
+                fread(&entry, PAGE_TABLE_ENTRY_SIZE,1,memory);
+                if (i == vpn)
+                {
+                    unsigned char validez = ta_validez(entry);
+                    if (validez == (unsigned char)0x01)
+                    {
+                        unsigned int pfn = ta_pfn(entry);
+                        unsigned int dir_fisica;
+
+                        // Concatenamos los bits pfn con offset para hacer la dirección física.
+                        pfn = pfn << 23;
+                        dir_fisica = pfn + offset;
+                        // Le sumamos los 4KB de la PCB y los 16B del Frame Bitmap
+                        unsigned int dir = dir_fisica + PCB_SIZE + FRAME_BITMAP_SIZE;
+
+
+                        file_desc -> pfn = pfn;
+                        file_desc -> dir = dir;
+                        // Fijamos la última posición leída a la dirección física inicial. 
+                        fclose(memory);
+                        exit(0);
+                    } else 
+                    {
+                        printf("ERROR: la entrada de la tabla de páginas no es válida.\n");
+                        fclose(memory);
+                        exit(0);    
+                    }
+                }
+            }
+            fclose(memory);
+            printf("ERROR: el archivo por leer no existe.\n");
+            exit(0);
+        } else {
+            // Este proceso no nos sirve, por lo que >
+            // Nos saltamos todas las entradas del proceso y dejamos el puntero en la siguiente entrada de al PCB
+            fseek(memory,PROCESS_N_FILES_ENTRIES*PROCESS_FILE_ENTRY_SIZE + PAGE_TABLE_ENTRY_SIZE*PAGE_TABLE_N_ENTRIES,SEEK_CUR);
+            moves += PROCESS_N_FILES_ENTRIES*PROCESS_FILE_ENTRY_SIZE + PAGE_TABLE_ENTRY_SIZE*PAGE_TABLE_N_ENTRIES;
+        }
+    }
+    // Si no encontramos el proceso, retornamos ERROR
+    fclose(memory);
+    printf("ERROR: el proceso del archivo no existe.\n");
+    exit(0);
 }
 
 void cr_close(CrmsFile* file_desc){

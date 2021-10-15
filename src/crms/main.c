@@ -19,7 +19,7 @@ int main( int argc, char**argv){
     //cr_ls_processes();
     //cr_start_process(69, "coloro");
     //cr_ls_processes();
-    CrmsFile* crms_file = cr_open(0,"secret.txt", 'r');
+    CrmsFile* crms_file = cr_open(0,"message.txt", 'r');
 
     // Los mallocs de buffer SIEMPRE se harán del tamaño total del archivo
     char* entero = malloc(crms_file -> size);
