@@ -141,6 +141,7 @@ int cr_exists(int process_id, char * file_name){
                 if (file_state ==  0x01){
                     printf("\tFILE %s STATE 0x%02x\n",process_file,file_state);
                     // comprobamos si es el que buscamos
+                    printf("STRCOMP OUTPUT: %i\n", strcmp((char *) process_file,file_name));
                     if (strcmp((char *) process_file,file_name) == 0){
                         printf("\tFILE FOUND %s\n", process_file);
                         // encontramos el archivo, entonces retornamos 1
@@ -240,6 +241,8 @@ CrmsFile* cr_open(int process_id, char* file_name, char mode){
     int exists = cr_exists(process_id, file_name);
 
     printf("CR_EXISTS ENDS\n");
+
+    printf("¿EXISTE? %d\n", exists);
 
     if (exists){
         if (mode == 'r'){
