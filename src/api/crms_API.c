@@ -224,7 +224,39 @@ void cr_start_process(int process_id, char * process_name){
 }
 
 void cr_finish_process(int process_id){
-    return;
+
+    printf("CR_FINISH_PROCESS RUNNING\n");
+    FILE * memory = fopen(MEMORY_PATH, "r+b");
+    unsigned char process_state;
+    unsigned int process_id_uint;
+    unsigned char init_state = 0x01;
+    unsigned char init_valid = 0x00;
+
+    for (int i=0; i < PCB_N_ENTRIES; i++){
+        fread(&process_state,PROCESS_STATE_SIZE,1,memory); 
+        // buscamos en los procesos activos
+        if (process_state == (unsigned char)0x01){
+            // Obtenemos el pid
+            fread(&process_id_uint, PROCESS_ID_SIZE, 1, memory);
+            printf("PID: %u\n", process_id_uint);
+            bin(process_id_uint, 8);
+            printf("\n");
+            printf("PID: %u\n", process_id);
+            bin(process_id, 8);
+            printf("\n");
+            if (process_id_uint == (unsigned int)process_id){
+                printf("\tFOUND THE PROCESS ID: %i\n", process_id);
+                //Retrocedo 2 para llegar al bit de validez y lo cambio a 0
+                fseek(memory,-1L,SEEK_CUR);
+                fseek(memory,-1L,SEEK_CUR);
+                fwrite(&init_valid, sizeof(unsigned char), 1, memory);
+                fclose(memory);
+                return;
+            }
+        }
+        fseek(memory,PROCESS_ID_SIZE+NAMES_SIZE+PROCESS_N_FILES_ENTRIES*PROCESS_FILE_ENTRY_SIZE + PAGE_TABLE_ENTRY_SIZE*PAGE_TABLE_N_ENTRIES,SEEK_CUR);
+    }
+    fclose(memory);
 }
 
 // Funciones Archivos
