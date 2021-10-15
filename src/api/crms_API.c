@@ -202,7 +202,7 @@ void cr_start_process(int process_id, char * process_name){
                 fseek(memory,NAMES_SIZE+VIRTUAL_ADRESS_SIZE+PROCESS_FILE_SIZE,SEEK_CUR);
             }
             //Estamos en la tabla de paginas, debemos dejar bits de validez en 0
-            unsigned int byte_prueba;
+            unsigned char byte_prueba;
             for (int n=0; n < PAGE_TABLE_N_ENTRIES; n++){
                 //Cada entrada es de un byte, donode el primer bit debe ser 0 (bit de validez)
                 //y los siguientes 7 bits deben ser el PFN (que se obtiene del frame bit map)
@@ -231,6 +231,7 @@ void cr_finish_process(int process_id){
     unsigned char process_id_uint;
     unsigned char init_state = 0x01;
     unsigned char init_valid = 0x00;
+    unsigned char page_table_entry;
 
     for (int i=0; i < PCB_N_ENTRIES; i++){
         fread(&process_state,PROCESS_STATE_SIZE,1,memory); 
@@ -239,16 +240,32 @@ void cr_finish_process(int process_id){
             // Obtenemos el pid
             fread(&process_id_uint, PROCESS_ID_SIZE, 1, memory);
             if (process_id_uint == (unsigned char)process_id){
-                printf("\tFOUND THE PROCESS ID: %i\n", process_id);
+                printf("\tFINISHING PROCESS ID: %i\n", process_id);
                 //Retrocedo 2 para llegar al bit de validez y lo cambio a 0
                 fseek(memory,-1L,SEEK_CUR);
                 fseek(memory,-1L,SEEK_CUR);
+                //Cambiamos el byte de validez a 0x00
                 fwrite(&init_valid, sizeof(unsigned char), 1, memory);
+                //Avanzamos a la page table
+                fseek(memory,PROCESS_ID_SIZE+NAMES_SIZE+PROCESS_N_FILES_ENTRIES*PROCESS_FILE_ENTRY_SIZE,SEEK_CUR);
+                //Leemos cada entrada del page table, 
+                for (int k=0; k<PAGE_TABLE_N_ENTRIES; k++){
+                    fread(&page_table_entry, PAGE_TABLE_ENTRY_SIZE, 1, memory);
+                    if (page_table_entry > 127){
+                        //Si tiene bit de validez igual a 1 sabemos que tiene un frame asociado
+                        page_table_entry = page_table_entry - 128;
+                        printf("Entry #%i - PFN: %i\n", k, page_table_entry);
+                    }
+                }
                 fclose(memory);
                 return;
             }
+            fseek(memory,NAMES_SIZE+PROCESS_N_FILES_ENTRIES*PROCESS_FILE_ENTRY_SIZE + PAGE_TABLE_ENTRY_SIZE*PAGE_TABLE_N_ENTRIES,SEEK_CUR);
         }
-        fseek(memory,PROCESS_ID_SIZE+NAMES_SIZE+PROCESS_N_FILES_ENTRIES*PROCESS_FILE_ENTRY_SIZE + PAGE_TABLE_ENTRY_SIZE*PAGE_TABLE_N_ENTRIES,SEEK_CUR);
+        else
+        {
+            fseek(memory,PROCESS_ID_SIZE+NAMES_SIZE+PROCESS_N_FILES_ENTRIES*PROCESS_FILE_ENTRY_SIZE + PAGE_TABLE_ENTRY_SIZE*PAGE_TABLE_N_ENTRIES,SEEK_CUR);
+        }
     }
     fclose(memory);
 }
