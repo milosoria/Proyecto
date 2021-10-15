@@ -323,64 +323,59 @@ CrmsFile* cr_open(int process_id, char* file_name, char mode){
 /* 7.Entre el VPN, y el PFN de cada pagina sabes cuales frames leer y cuanto leer. */
 
 int cr_write_file(CrmsFile* file_desc, void * buffer, int n_bytes){
-
-    /* * Funcion para escribir archivos. */
-    /* * Escribe en el archivo representado por file_desc los n_bytes que se encuentran en la direccion indicada por buffer y */
-    /* * retorna la cantidad de Bytes escritos en el archivo (en caso de no terminar). La escritura comienza desde el primer espacio libre (IMPORTANTE) */
-    /* * dentro de la memoria virtual. La escritura termina cuando: *1/ */
     printf("CR_WRITE_FILE RUNNING\n");
-    // asumo que conseguir dir me retorna la direccion fisica, por ahora ocupo dir_page_table
-    FILE* memory = fopen(MEMORY_PATH,"r+b");
-    // posicion en la page table
-    unsigned int vpn = va_vpn(file_desc->virtual_dir);
-    unsigned int offset = va_offset(file_desc->virtual_dir);
 
-    unsigned char process_name[NAMES_SIZE];
-    unsigned char page_table_entry;
-    unsigned int process_id_uint;
+    unsigned int dir_actual = file_desc -> dir;
+    unsigned int offset;
+    
+    printf("\tDIR INICIAL: %u\n", dir_actual);
 
-    for (int i=0; i < PCB_N_ENTRIES; i++){
-        fseek(memory,PROCESS_STATE_SIZE,SEEK_CUR); 
-        process_id_uint = fgetc(memory);
-        // obtenemos el nombre del proceso
-        fread(process_name,NAMES_SIZE,1,memory);
-        if (process_id_uint == (unsigned int)file_desc->process_id){
-            // encontre el id del proceso, entonces reviso todas sus entradas de archivos
-            // recorremos las entradas de archivos
-            fseek(memory,PROCESS_FILE_ENTRY_SIZE*PROCESS_FILE_SIZE,SEEK_CUR);
-            for (int j=0; j < PAGE_TABLE_N_ENTRIES; j++){
-                fread(&page_table_entry,PAGE_TABLE_ENTRY_SIZE,1,memory);
-                // esta es la entrada que le corresponde al archivo
-                if (j == vpn){
-                    unsigned int pfn = ta_pfn(page_table_entry);
-                    // flujo principal aca
-                    return n_bytes;
-                }
-            }
-            return 0;
+    printf("\tBytes por leer en esta llamada: %d.\n", n_bytes);
+
+    printf("\t-- BEGIN FOR --\n");
+
+    // Abrimos el archivo de memoria
+    FILE * memory = fopen(MEMORY_PATH, "r+b");
+    // Tenemos que leer la cantidad de bytes.
+    for (int i = 1; i < n_bytes + 1; i++)
+    {
+        // Encontramos la nueva dir_actual.
+        cr_conseguir_dir(file_desc);
+        dir_actual = file_desc -> dir;
+        // funcion para obtener offset
+        offset = get_offset(dir_actual);
+        if (offset == 0){
+            // nueva pagina
+            // conectamos un nuevo frame
+            // si no hay frames disponibles, entonces retornamos n_bytes - numero de bytes escritos
+        }else{
+            // seguimos en la misma pagina
+            // nos movemos a la direccion fisica
+            fseek(memory, dir_actual, SEEK_SET);
+            fwrite();
+            //buffer[file_desc->bytes_leidos] = dato;
         }
-        fseek(memory,PROCESS_N_FILES_ENTRIES*PROCESS_FILE_ENTRY_SIZE + PAGE_TABLE_ENTRY_SIZE*PAGE_TABLE_N_ENTRIES,SEEK_CUR);
+
+        file_desc -> bytes_leidos += 1;
+        //REVISAR SI SE LLEGA AL FINAL DEL ARCHIVO
+        // Revisamos si se llega al final del archivo.
+        if (file_desc -> bytes_leidos == file_desc -> size){
+            printf("\t-- END FILE --\n");
+            printf("Se ha llegado hasta el final del archivo.\nReseteando sus bytes_leidos a 0.\n");
+            file_desc -> bytes_leidos = 0;
+            // Retornamos la cantidad de bytes leídos hasta ahora por esta llamada.
+            printf("CR_READ END. Bytes leídos (output): %d.\n", i);
+            fclose(memory);
+             return i;
+        }
     }
-
-    /* Con la direccion virtual de cada archivo tienes la página y el offset y aparte tienes el tamaño del proceso */
-    /* Sabes que las paginas tienen asociado un frame único a ellas */
-    /* asi que si analizas todas las entradas validas puedes saber, haciendo uso de la pagina y los offset y los tamaños que espacios vacios hay y donde */
-    /* y así mismo si tomas el proceso con mayor direccion virtual tienes por garantia de por como se construye la direccion virutal que despues de ese proceso está todo vacío */
-
-    // tengo la maxima direccion virtual y obtengo de esta, su offset, si el offset es 0, entonces la pagina esta vacia
-    // comprobar que la direccion virtual no es mayor al size maximo de la memoria
+    // Si termina el for, es por que se leyeron todos los bytes por leer del input 'n_bytes'.
+    // Así, termina la función retornando la totalidad de bytes leídos (que es igual a 'n_bytes').
+    printf("\t-- END FOR --\n");
+    printf("Se han leído los %d bytes.\n", n_bytes);
+    printf("CR_READ END. Bytes leídos (output): %d.\n", n_bytes);
     fclose(memory);
-    return 1;
-
-    /*     - No quedan frames disponibles para continuar */
-    /*     - Se termina el espacio contiguo en la memoria virtual */
-    /*     - Se escribieron los n_bytes */
-
-    /* Con la direccion virtual de cada archivo tienes la página y el offset y aparte tienes el tamaño del proceso */
-    /* Sabes que las paginas tienen asociado un frame único a ellas */
-    /* asi que si analizas todas las entradas validas puedes saber, haciendo uso de la pagina y los offset y los tamaños que espacios vacios hay y donde */
-    /* y así mismo si tomas el proceso con mayor direccion virtual tienes por garantia de por como
-     * se construye la direccion virutal que despues de ese proceso está todo vacío */
+    return n_bytes;
 
 }
 
