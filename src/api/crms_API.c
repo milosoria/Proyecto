@@ -186,14 +186,6 @@ void cr_start_process(int process_id, char * process_name){
             fwrite(&process_id, sizeof(unsigned char), 1, memory);
 
 
-            // TODO: Esta bien esto para escribirlo en big endian?
-            /*
-            for (int k=0; k < NAMES_SIZE;k++){
-                process_name_buff[k] = ((((process_name[k]) & 0xff) << 8) | ((process_name[k]) >> 8));
-            }
-
-            fwrite(process_name_buff, sizeof(unsigned char), NAMES_SIZE, memory);
-            */
             size_t element_size = sizeof *process_name;
             size_t elements_to_write = sizeof process_name;
 
@@ -330,7 +322,32 @@ CrmsFile* cr_open(int process_id, char* file_name, char mode){
 /* 6.Por cada pagina perteneciente al archivo con el PFN obtienes exactamente el frame y al que pertenece la pagina. */
 /* 7.Entre el VPN, y el PFN de cada pagina sabes cuales frames leer y cuanto leer. */
 
-int cr_write_file(CrmsFile* file_desc, void * buffer, int n_bytes){}
+int cr_write_file(CrmsFile* file_desc, void * buffer, int n_bytes){
+    // asumo que conseguir dir me retorna la direccion fisica, por ahora ocupo dir_page_table
+    FILE* memory = fopen(MEMORY_PATH,"r+b");
+    fseek(memory,file_desc->dir_page_table,SEEK_CUR);
+    unsigned int offset = va_offset(file_desc->virtual_dir);
+    printf("virtual_dir %i\n", file_desc->virtual_dir);
+    printf("dir_page_table %i\n", file_desc->dir_page_table);
+    return 1;
+
+/* - [ ] int cr_write_file(CrmsFile\* file_desc, void \* buffer, int n_bytes):
+ * Funcion para escribir archivos.
+ * Escribe en el archivo representado por file_desc los n_bytes que se encuentran en la direccion indicada por buffer y
+ * retorna la cantidad de Bytes escritos en el archivo (en caso de no terminar). La escritura comienza desde el primer espacio libre (IMPORTANTE)
+ * dentro de la memoria virtual. La escritura termina cuando: */
+
+/*     - No quedan frames disponibles para continuar */
+/*     - Se termina el espacio contiguo en la memoria virtual */
+/*     - Se escribieron los n_bytes */
+
+/* Con la direccion virtual de cada archivo tienes la página y el offset y aparte tienes el tamaño del proceso */
+/* Sabes que las paginas tienen asociado un frame único a ellas */
+/* asi que si analizas todas las entradas validas puedes saber, haciendo uso de la pagina y los offset y los tamaños que espacios vacios hay y donde */
+/* y así mismo si tomas el proceso con mayor direccion virtual tienes por garantia de por como
+ * se construye la direccion virutal que despues de ese proceso está todo vacío */
+
+}
 
 int cr_conseguir_dir( CrmsFile * file_desc){
     int process_id = file_desc -> process_id;
@@ -365,7 +382,7 @@ int cr_conseguir_dir( CrmsFile * file_desc){
             // recorremos las entradas de archivos
             fseek(memory,PROCESS_N_FILES_ENTRIES*PROCESS_FILE_ENTRY_SIZE,SEEK_CUR);
             moves += PROCESS_N_FILES_ENTRIES*PROCESS_FILE_ENTRY_SIZE;
-            unsigned int entry;
+            unsigned char entry;
 
             // Guardamos la dirección (en bytes de la page table).
             file_desc -> dir_page_table = moves;
@@ -375,7 +392,7 @@ int cr_conseguir_dir( CrmsFile * file_desc){
                 fread(&entry, PAGE_TABLE_ENTRY_SIZE,1,memory);
                 if (i == vpn)
                 {
-                    unsigned int validez = ta_validez(entry);
+                    unsigned char validez = ta_validez(entry);
                     if (validez == (unsigned char)0x01)
                     {
                         unsigned int pfn = ta_pfn(entry);
@@ -388,6 +405,7 @@ int cr_conseguir_dir( CrmsFile * file_desc){
                         unsigned int dir = dir_fisica + PCB_SIZE + FRAME_BITMAP_SIZE;
 
 
+                        file_desc -> pfn = pfn;
                         file_desc -> dir = dir;
                         // Fijamos la última posición leída a la dirección física inicial. 
                         file_desc -> last_pos = dir;
@@ -486,12 +504,12 @@ unsigned int va_vpn(unsigned int file_va){
     return vpn;
 }
 
-unsigned int ta_validez(unsigned int table_entry){
-    unsigned int validez = table_entry >> 7;
+unsigned char ta_validez(unsigned char table_entry){
+    unsigned char validez = table_entry >> 7;
     return validez;
 }
 
-unsigned int ta_pfn(unsigned int table_entry){
+unsigned int ta_pfn(unsigned char table_entry){
     unsigned int pfn = table_entry & 127;
     return pfn;
 }
