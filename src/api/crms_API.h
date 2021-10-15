@@ -70,8 +70,8 @@ unsigned int va_vpn(unsigned int file_va);
 unsigned int va_offset(unsigned int file_va);
 
 // Page Table
-unsigned int ta_validez(unsigned int table_entry);
-unsigned int ta_pfn(unsigned int table_entry);
+unsigned char ta_validez(unsigned char table_entry);
+unsigned int ta_pfn(unsigned char table_entry);
 
 void bin(unsigned n, int m);
 void va_print(unsigned int file_va);

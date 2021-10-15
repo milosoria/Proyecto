@@ -15,11 +15,15 @@ int main( int argc, char**argv){
     
     cr_mount(memory_path);
     cr_exists(0,"im_a_mp3.bin");
-    // cr_ls_files(0);
-    //cr_ls_processes();
-    //cr_start_process(69, "coloro");
-    //cr_ls_processes();
-    //CrmsFile* crms_file = cr_open(0,"im_a_mp3.bin", 'r');
+    cr_ls_files(0);
+    cr_ls_processes();
+    cr_start_process(69, "coloro");
+    cr_ls_processes();
+    CrmsFile* crms_file = cr_open(0,"im_a_mp3.bin", 'r');
+    unsigned int dir = cr_conseguir_dir(crms_file);
+    printf("MAIN: dir: %u\n",dir);
+    char * buffer = "CAMILOSORIA";
+    int result  = cr_write_file(crms_file,"im_a_mp3.bin", 3);
 
     //cr_read(crms_file, malloc(crms_file->size), crms_file->size);
 
