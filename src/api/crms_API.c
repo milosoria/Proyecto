@@ -652,6 +652,16 @@ void cr_delete(CrmsFile * file_desc){
     unsigned char file_state;
     unsigned char process_state;
 
+    // Page Table
+    unsigned char entry;
+
+    // Subentradas
+    unsigned int size;
+    unsigned int dir_virtual;
+    unsigned char vpn_antes;
+    unsigned char vpn_despues;
+
+
     // Sabemos que el archivo existe y está activado.
     // Recorremos su PCB.
     for (int i = 0; i < PCB_N_ENTRIES; i++){
@@ -664,7 +674,7 @@ void cr_delete(CrmsFile * file_desc){
         if (process_state == (unsigned char)0x01 && process_id_uint == (unsigned int) process_id)
         {
             // Recorremos los archivos
-            for (int i = 0; i < PROCESS_N_FILES_ENTRIES; i++)
+            for (int j = 0; j < PROCESS_N_FILES_ENTRIES; j++)
             {
                 // Leemos validez.
                 fread(&file_state, 1, 1, memory);
@@ -678,11 +688,8 @@ void cr_delete(CrmsFile * file_desc){
                     fseek(memory,-13L,SEEK_CUR);
                     // Cambiamos su bit de validez a 0.
                     fwrite(&invalid, sizeof(unsigned char), 1, memory);
-                    // Volvemos para chequear lo que cambiamos.
-                    fseek(memory,-1L,SEEK_CUR);
-                    fread(&file_state, 1, 1, memory);
-                    printf("\tCHANGED VALIDEZ TO %u\n", file_state);
-                    return;
+                    //Ahora, tenemos que llegar a page table, por lo que nos saltamos los que quedan.
+                    fseek(memory,NAMES_SIZE+PROCESS_FILE_SIZE + VIRTUAL_ADRESS_SIZE,SEEK_CUR);
                 // Si no es el archivo que buscamos.
                 } else {
                     // Pasamos al próximo archivo.
@@ -690,15 +697,75 @@ void cr_delete(CrmsFile * file_desc){
                 }
                 
             }
+            // PAGE TABLE
+            for (int k = 0; k < PAGE_TABLE_N_ENTRIES; k++)
+            {
+                entry = fgetc(memory);
+                // entry es válida
+                if (entry > 127)
+                {
+                    // Este es el pfn
+                    entry = entry - 0x80;
+                    //Volvemos uno atrás y lo reescribimos
+                    fseek(memory,-1L,SEEK_CUR);
+                    fwrite(&entry, sizeof(unsigned char), 1, memory);
+                    change_frame_bit_map(entry);
+                }
+            }
+            // Volvemos al principio
+            rewind(memory);
+            for (int l = 0; l < PCB_N_ENTRIES; l++)
+            {
+                fread(&process_state,PROCESS_STATE_SIZE,1,memory);
+                // id del proceso 
+                process_id_uint = fgetc(memory);
+                // saltamos su nombre
+                fseek(memory,NAMES_SIZE,SEEK_CUR);
+                // si el proceso esta cargado y tiene id igual al buscado
+                if (process_state == (unsigned char)0x01 && process_id_uint == (unsigned int) process_id){
+                    //Estamos en las subentradas del proceso
+                    for (int m = 0; m < PROCESS_N_FILES_ENTRIES; m++){
+                        // Leemos validez.
+                        fread(&file_state, 1, 1, memory);
+                        // Leemos nombre
+                        fread(process_file, NAMES_SIZE, 1, memory);
+                        
+                        // Saltamos nombre
+                        //fseek(memory, NAMES_SIZE, SEEK_CUR);
+                        fread(&size, PROCESS_FILE_SIZE, 1, memory);
+                        fread(&dir_virtual, VIRTUAL_ADRESS_SIZE, 1, memory);
+                        if (file_state ==  0x01)
+                        {
+                            vpn_antes = va_vpn(dir_virtual);
+                            vpn_despues = va_vpn(dir_virtual + size);
+                            if (vpn_antes == vpn_despues)
+                            {
+                                activate_page_table(vpn_despues, process_id);
+                            } else {
+                                for (int p = vpn_antes; p < vpn_despues+1; p++)
+                                {
+                                    activate_page_table(p, process_id);
+                                }
+                                
+                            }
+                            
+                        }
+                        
+                        size = bswap_32(size);
+                        dir_virtual = bswap_32(dir_virtual);
+                    }
+                }
+                else{
+                    fseek(memory, PROCESS_N_FILES_ENTRIES*PROCESS_FILE_ENTRY_SIZE+PAGE_TABLE_ENTRY_SIZE*PAGE_TABLE_N_ENTRIES,SEEK_CUR);
+                }
+            }
         // Si no es el proceso que buscamos:    
         } else
         {
             fseek(memory, PROCESS_N_FILES_ENTRIES*PROCESS_FILE_ENTRY_SIZE+PAGE_TABLE_ENTRY_SIZE*PAGE_TABLE_N_ENTRIES,SEEK_CUR);
         }
     }
-    
-        
-    
+    fclose(memory);
 }
 
 void cr_close(CrmsFile* file_desc){
@@ -790,6 +857,53 @@ unsigned char find_empty_frame(){
     printf("No hay frames disponibles\n");
     fclose(memory);
     return NULL;
+}
+
+void activate_page_table(unsigned char vpn, unsigned int process_id){
+    FILE * memory = fopen(MEMORY_PATH, "r+b");
+    // Datos para llegar al Page Table
+    unsigned char process_file[NAMES_SIZE];
+    unsigned int process_id_uint;
+    unsigned char file_state;
+    unsigned char process_state;
+
+    // Page Table
+    unsigned char entry;
+
+    // Subentradas
+    unsigned int size;
+    unsigned int dir_virtual;
+    unsigned char vpn_antes;
+    unsigned char vpn_despues;
+
+
+    // Sabemos que el archivo existe y está activado.
+    // Recorremos su PCB.
+    for (int i = 0; i < PCB_N_ENTRIES; i++){
+        fread(&process_state,PROCESS_STATE_SIZE,1,memory);
+        // id del proceso 
+        process_id_uint = fgetc(memory);
+        // saltamos su nombre
+        fseek(memory,NAMES_SIZE,SEEK_CUR);
+        // si el proceso esta cargado y tiene id igual al buscado
+        if (process_state == (unsigned char)0x01 && process_id_uint == (unsigned int) process_id)
+        {
+            fseek(memory, 210, SEEK_CUR);
+            // PAGE TABLE
+            fseek(memory, vpn, SEEK_CUR);
+            unsigned char byte = fgetc(memory);
+            if (byte < 128)
+            {
+                change_frame_bit_map(byte);
+                byte = byte + 0x80;
+            }
+        // Si no es el proceso que buscamos:    
+        } else
+        {
+            fseek(memory, PROCESS_N_FILES_ENTRIES*PROCESS_FILE_ENTRY_SIZE+PAGE_TABLE_ENTRY_SIZE*PAGE_TABLE_N_ENTRIES,SEEK_CUR);
+        }
+    }
+    fclose(memory);
 }
 
 void change_frame_bit_map(unsigned char posicion){

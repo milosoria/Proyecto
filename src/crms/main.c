@@ -12,9 +12,18 @@ int main( int argc, char**argv){
     
     cr_mount(memory_path);
 
-    CrmsFile* crms_file = cr_open(0, "message.txt", 'r');
+    cr_start_process(69, "coloro");
+    print_page_table(69);
+    CrmsFile * crms_file = cr_open(69, "ooweee.txt", 'w');
+    print_page_table(69);
+    //print_frame_bit_map();
+    //print_page_table(crms_file -> process_id);
 
     cr_delete(crms_file);
+    print_page_table(69);
+
+    //print_frame_bit_map();
+    //print_page_table(crms_file -> process_id);
 
     cr_close(crms_file);
 }
