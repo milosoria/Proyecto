@@ -70,7 +70,7 @@ Implementacion de funciones para manipular archivos de procesos:
 
 - [X] void cr_start_process(int process_id , char \* process_name): Funcion que inica un proceso con id process_id y nombre process_name. Guarda toda la informacion en una entrada de la PCB.
 
-- [ ] void cr_finish_process(int process_id): Funcion para terminar un proceso con id process_id. Es importante que antes de que el proceso termine se debe liberar toda la memoria asignada y no debe tener entrada valida en la tabla de PCB.
+- [X] void cr_finish_process(int process_id): Funcion para terminar un proceso con id process_id. Es importante que antes de que el proceso termine se debe liberar toda la memoria asignada y no debe tener entrada valida en la tabla de PCB.
 
 ### Funciones Archivos:
 
@@ -83,11 +83,11 @@ Implementacion de funciones para manipular archivos de procesos:
     - Se termina el espacio contiguo en la memoria virtual
     - Se escribieron los n_bytes
 
-- [ ] int cr_read( CrmsFile \* file_desc, void\* buffer, int n_bytes): Funcion para leer archivos. Lee los siguientes n_bytes desde el archivo representado por file_desc y los gurda en la direccion aputnada por buffer. Debe retornar la cantidad de Bytes que efectivamente leyo. La lectura se efectua recorriendo los frames donde se encuentra escrito su contenido, comenzando desde la ultima posicion leida por un llamado cr_read. (Variable global?)
+- [X] int cr_read( CrmsFile \* file_desc, void\* buffer, int n_bytes): Funcion para leer archivos. Lee los siguientes n_bytes desde el archivo representado por file_desc y los gurda en la direccion aputnada por buffer. Debe retornar la cantidad de Bytes que efectivamente leyo. La lectura se efectua recorriendo los frames donde se encuentra escrito su contenido, comenzando desde la ultima posicion leida por un llamado cr_read. (Variable global?)
 
 - [ ] void cr_delete(CrmsFile \* file_desc): Funcion para liberar memoria de un archivo perteneciente a un proceso con id process_id. Para esto el archivo debe dejar de aparecer en la memoria virtual del proceso, ademas, si los frames quedan totalmente libres se debe indicar en el frame bitmap que ese frame ya no esta siendo utilizado e invalidar la entrada en la PCB.
 
-- [ ] void cr_close(CrmsFile\* file_desc): Funcion para cerrar archivo. Cierra el archivo indicado por file_desc.
+- [X] void cr_close(CrmsFile\* file_desc): Funcion para cerrar archivo. Cierra el archivo indicado por file_desc.
 
 ## Manejo de bits:
 ### Obtener bit:

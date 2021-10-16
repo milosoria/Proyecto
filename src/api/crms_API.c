@@ -418,7 +418,7 @@ CrmsFile* cr_open(int process_id, char* file_name, char mode){
                     }
                     // max_virtual_dir + 1 < size mem virtual
                     max_virtual_dir++;
-                    crms_file = init_crms_file(max_virtual_dir, process_id_uint, max_found_size, file_name);
+                    crms_file = init_crms_file(max_virtual_dir, process_id_uint, 0, file_name);
                     fseek(memory,moves_real,SEEK_SET);
                     fwrite(&max_virtual_dir,VIRTUAL_ADRESS_SIZE,1,memory);
                     fclose(memory);
@@ -455,12 +455,14 @@ int cr_write_file(CrmsFile* file_desc, void * buffer, int n_bytes){
 
     unsigned int dir_actual= file_desc->dir; 
     unsigned int offset;
+    unsigned int pfn;
     unsigned char vpn = va_vpn(file_desc->virtual_dir);
 
     printf("\tDIR INICIAL: %u\n", dir_actual);
 
     printf("\tBytes por leer en esta llamada: %d.\n", n_bytes);
     printf("\t-- BEGIN FOR --\n");
+    printf("\t%i size\n",file_desc->size);
 
     // Abrimos el archivo de memoria
     FILE * memory = fopen(MEMORY_PATH, "r+b");
@@ -472,12 +474,11 @@ int cr_write_file(CrmsFile* file_desc, void * buffer, int n_bytes){
         dir_actual = file_desc -> dir;
         // funcion para obtener offset
         offset = get_offset(dir_actual);
-        printf("\t DIR_ACTUAL %u AND OFFSET %u\n", dir_actual, offset);
         if (offset == 0){
             // verificar que la pagina este vacia
             // El proceso comienza en una nueva pagina o nos cambiamos a una nueva pagina despues de escribir
             // conectamos un nuevo frame
-            link_new_page_to_empty_frame(vpn, file_desc->process_id);
+            pfn = link_new_page_to_empty_frame(vpn, file_desc->process_id);
             print_page_table(file_desc->process_id);
             // CASOS DE TERMINO:
             /* No quedan frames disponibles para continuar, o */
@@ -620,6 +621,8 @@ int cr_read(CrmsFile * file_desc, char* buffer, int n_bytes){
     printf("\tBytes por leer en esta llamada: %d.\n", n_bytes);
 
     printf("\t-- BEGIN FOR --\n");
+
+    printf("\t%i size\n",file_desc->size);
 
     // Abrimos el archivo de memoria
     FILE * memory = fopen(MEMORY_PATH, "rb");
@@ -904,7 +907,7 @@ void print_frame_bit_map(){
     fclose(memory);
 }
 
-void link_new_page_to_empty_frame(unsigned char VPN, unsigned int PID){
+unsigned int link_new_page_to_empty_frame(unsigned char VPN, unsigned int PID){
     FILE * memory = fopen(MEMORY_PATH, "r+b");
     unsigned char PFN;
 
@@ -935,12 +938,15 @@ void link_new_page_to_empty_frame(unsigned char VPN, unsigned int PID){
             PFN = PFN + 0x80;
             printf("Nuevo valor de entrada: %d\n", PFN);
             fwrite(&PFN, sizeof(unsigned char), 1, memory);
+            fclose(memory);
+            return PFN;
         } else {
             // Nos saltamos todas las entradas del proceso y dejamos el puntero en la siguiente entrada de al PCB
             fseek(memory,PROCESS_N_FILES_ENTRIES*PROCESS_FILE_ENTRY_SIZE + PAGE_TABLE_ENTRY_SIZE*PAGE_TABLE_N_ENTRIES,SEEK_CUR);
         }
     }
     fclose(memory);
+    return 0;
 }
 
 void print_page_table(unsigned int PID){
