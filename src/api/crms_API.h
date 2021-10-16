@@ -81,6 +81,7 @@ void change_frame_bit_map(unsigned char posicion);
 void print_frame_bit_map();
 unsigned int link_new_page_to_empty_frame(unsigned char VPN, unsigned int PID);
 void print_page_table(unsigned int PID);
+void activate_page_table(unsigned char vpn, unsigned int process_id);
 
 //Escribir en un file real
 void write_file_real(char* buffer, CrmsFile*);
