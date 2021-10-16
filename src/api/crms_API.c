@@ -484,7 +484,7 @@ int cr_write_file(CrmsFile* file_desc, void * buffer, int n_bytes){
             /* • Se termina el espacio contiguo en la memoria virtual, es lo mismo esto que no encontrar frames disponibles? */
         } else {
             // seguimos en la misma pagina
-            // nos movemos a la direccion fisica
+            // nos movemos a la direccion fisica pero sumando size
             fseek(memory, dir_actual+file_desc->size, SEEK_SET);
             // escribimos un byte
             unsigned char byte = *(unsigned char*) &buffer[file_desc->size]; 
