@@ -2,6 +2,7 @@
 #define PCB_N_ENTRIES 16
 // 4 KB
 #define PCB_SIZE 256 * 16 
+#define PCB_ENTRY_SIZE 256 
 // 256/16 entries = 16 bytes cada una
 // size of 1 byte
 #define NAMES_SIZE 12

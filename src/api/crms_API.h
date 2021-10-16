@@ -65,7 +65,7 @@ void cr_delete(CrmsFile * file_desc);
 void cr_close(CrmsFile* file_desc);
 
 // Virtual Address
-unsigned int va_vpn(unsigned int file_va);
+unsigned char va_vpn(unsigned int file_va);
 unsigned int get_offset(unsigned int file_va);
 
 // Page Table
