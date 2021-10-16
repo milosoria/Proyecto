@@ -8,29 +8,23 @@ int main( int argc, char**argv){
         exit(0);
     }
 
-    unsigned int* tabla_paginas;
     char * memory_path  = argv[1];
-    unsigned int virtual_dir;
-    unsigned int size;
+    
     cr_mount(memory_path);
-    cr_ls_processes();
-    cr_ls_files(0);
-    CrmsFile* new = cr_open(0,"owyes",'w');
-    cr_ls_files(0);
 
-    char * buffer = malloc(20);
-    char * empty = malloc(20);
+    cr_start_process(69, "coloro");
+    print_page_table(69);
+    CrmsFile * crms_file = cr_open(69, "ooweee.txt", 'w');
+    print_page_table(69);
+    //print_frame_bit_map();
+    //print_page_table(crms_file -> process_id);
 
-    for(int i= 0;i<20;i++){
-        buffer[i] = 0x01;
-    }
+    cr_delete(crms_file);
+    print_page_table(69);
 
-    cr_write_file(new,buffer,20);
-    cr_read(new,empty,20);
-    cr_ls_files(0);
+    //print_frame_bit_map();
+    //print_page_table(crms_file -> process_id);
 
-    for(int i= 0;i<20;i++){
-        printf("char 0x%02x\n",empty[i]);
-    }
+    cr_close(crms_file);
 
 }
