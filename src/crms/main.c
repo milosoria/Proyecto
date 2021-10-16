@@ -17,12 +17,20 @@ int main( int argc, char**argv){
     cr_ls_files(0);
     CrmsFile* new = cr_open(0,"owyes",'w');
     cr_ls_files(0);
-    char * buffer = malloc(500);
-    char * empty = malloc(500);
-    for(int i= 0;i<500;i++){
-        buffer[i] = 'c';
+
+    char * buffer = malloc(20);
+    char * empty = malloc(20);
+
+    for(int i= 0;i<20;i++){
+        buffer[i] = 0x01;
     }
-    cr_write_file(new,buffer,500);
-    cr_read(new,empty,500);
-    write_file_real(empty,new);
+
+    cr_write_file(new,buffer,20);
+    cr_read(new,empty,20);
+    cr_ls_files(0);
+
+    for(int i= 0;i<20;i++){
+        printf("char 0x%02x\n",empty[i]);
+    }
+
 }

@@ -164,7 +164,6 @@ void cr_start_process(int process_id, char * process_name){
     printf("CR_START_PROCESS RUNNING\n");
     FILE * memory = fopen(MEMORY_PATH, "r+b");
     unsigned char process_state;
-    unsigned int process_id_uint;
     unsigned char init_state = 0x01;
     unsigned char init_valid = 0x00;
 
@@ -181,7 +180,6 @@ void cr_start_process(int process_id, char * process_name){
 
 
             size_t element_size = sizeof *process_name;
-            size_t elements_to_write = sizeof process_name;
 
             fwrite(process_name, element_size, NAMES_SIZE, memory);
 
@@ -221,7 +219,6 @@ void cr_finish_process(int process_id){
     FILE * memory = fopen(MEMORY_PATH, "r+b");
     unsigned char process_state;
     unsigned char process_id_uint;
-    unsigned char init_state = 0x01;
     unsigned char init_valid = 0x00;
     unsigned char page_table_entry;
 
@@ -356,7 +353,6 @@ CrmsFile* cr_open(int process_id, char* file_name, char mode){
             unsigned char file_state;
             unsigned char process_state;
             unsigned int max_virtual_dir = 0;
-            unsigned int max_found_size;
 
             int found = 0;
             unsigned int file_size;
@@ -393,13 +389,11 @@ CrmsFile* cr_open(int process_id, char* file_name, char mode){
 
                             if (file_va > max_virtual_dir){
                                 max_virtual_dir =file_va;
-                                max_found_size =file_size;
                             }
 
                         } else {
                             if (!found){
                                 moves_real = ( pcbs-1)*PCB_ENTRY_SIZE+moves*PROCESS_FILE_ENTRY_SIZE+NAMES_SIZE+PROCESS_FILE_SIZE+1;
-                                int coloro_moves = ( pcbs-1)*PCB_ENTRY_SIZE+moves*PROCESS_FILE_ENTRY_SIZE;
                                 fseek(memory,-NAMES_SIZE,SEEK_CUR);
                                 fseek(memory,-1L,SEEK_CUR);
                                 unsigned int init = 0x01;
@@ -472,24 +466,30 @@ int cr_write_file(CrmsFile* file_desc, void * buffer, int n_bytes){
         // Encontramos la nueva dir_actual.
         cr_conseguir_dir(file_desc,'w');
         dir_actual = file_desc -> dir;
+        printf("\t DIR IN FOR %u\n", dir_actual);
         // funcion para obtener offset
         offset = get_offset(dir_actual);
+
         if (offset == 0){
             // verificar que la pagina este vacia
             // El proceso comienza en una nueva pagina o nos cambiamos a una nueva pagina despues de escribir
             // conectamos un nuevo frame
             pfn = link_new_page_to_empty_frame(vpn, file_desc->process_id);
-            print_page_table(file_desc->process_id);
-            // CASOS DE TERMINO:
-            /* No quedan frames disponibles para continuar, o */
-            /* - Si no hay frames disponibles, entonces retornamos file_desc -> size */ 
+            if (pfn ==0){
+                // CASOS DE TERMINO:
+                /* No quedan frames disponibles para continuar, o */
+                /* - Si no hay frames disponibles, entonces retornamos file_desc -> size */ 
+                return file_desc->size;
+            }
             /* • Se termina el espacio contiguo en la memoria virtual, es lo mismo esto que no encontrar frames disponibles? */
-        } else{
+        } else {
             // seguimos en la misma pagina
             // nos movemos a la direccion fisica
-            fseek(memory, dir_actual, SEEK_SET);
+            fseek(memory, dir_actual+file_desc->size, SEEK_SET);
             // escribimos un byte
-            fwrite(&buffer[file_desc->size], 1, 1, memory);
+            unsigned char byte = *(unsigned char*) &buffer[file_desc->size]; 
+            printf("\t BYTE TO WRITE 0x%02x\n", byte);
+            fwrite(&byte, 1, 1, memory);
             // actualizamos los bytes escritos
             file_desc -> size += 1;
         }
@@ -514,9 +514,7 @@ int cr_write_file(CrmsFile* file_desc, void * buffer, int n_bytes){
 int cr_conseguir_dir( CrmsFile * file_desc, char mode){
 
     int process_id = file_desc -> process_id;
-    char* file_name = file_desc -> file_name;
 
-    unsigned int file_size = file_desc -> size;
     // Se obtiene el virtual por leer address del archivo
     unsigned int file_va = file_desc -> virtual_dir + mode == 'w'?file_desc->size:file_desc -> bytes_leidos;
 
@@ -526,9 +524,7 @@ int cr_conseguir_dir( CrmsFile * file_desc, char mode){
 
     FILE * memory = fopen(MEMORY_PATH, "rb");
     // Datos para llegar al Page Table
-    unsigned char process_file[NAMES_SIZE];
     unsigned int process_id_uint;
-    unsigned char file_state;
     unsigned char process_state;
 
     unsigned int moves = 0;
@@ -601,6 +597,7 @@ int cr_conseguir_dir( CrmsFile * file_desc, char mode){
 }
 
 int cr_read(CrmsFile * file_desc, char* buffer, int n_bytes){
+
     printf("CR_READ RUNNING\n");
     // Si la dirección física del archivo todavía no ha sido init.
     if (!file_desc -> bytes_leidos){
@@ -668,7 +665,6 @@ void cr_delete(CrmsFile * file_desc){
     int process_id = file_desc -> process_id;
     char* file_name = file_desc -> file_name;
 
-    unsigned int file_size = file_desc -> size;
     // Se obtiene el virtual por leer address del archivo
     unsigned int file_va = file_desc -> virtual_dir + file_desc -> bytes_leidos;
 
