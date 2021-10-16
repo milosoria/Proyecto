@@ -26,4 +26,5 @@ int main( int argc, char**argv){
     //print_page_table(crms_file -> process_id);
 
     cr_close(crms_file);
+
 }

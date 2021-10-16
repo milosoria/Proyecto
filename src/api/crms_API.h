@@ -4,16 +4,16 @@
 #if HAVE_BYTESWAP_H 
 #include <byteswap.h> 
 #else 
-#define bswap_16(value) \ 
+#define bswap_16(value) \
 ((((value) & 0xff) << 8) | ((value) >> 8)) 
 
-#define bswap_32(value) \ 
-(((uint32_t)bswap_16((uint16_t)((value) & 0xffff)) << 16) | \ 
+#define bswap_32(value) \
+(((uint32_t)bswap_16((uint16_t)((value) & 0xffff)) << 16) | \
 (uint32_t)bswap_16((uint16_t)((value) >> 16))) 
 
-#define bswap_64(value) \ 
-(((uint64_t)bswap_32((uint32_t)((value) & 0xffffffff)) \ 
-<< 32) | \ 
+#define bswap_64(value) \
+(((uint64_t)bswap_32((uint32_t)((value) & 0xffffffff)) \
+<< 32) | \
 (uint64_t)bswap_32((uint32_t)((value) >> 32))) 
 #endif 
 
@@ -65,7 +65,7 @@ void cr_delete(CrmsFile * file_desc);
 void cr_close(CrmsFile* file_desc);
 
 // Virtual Address
-unsigned int va_vpn(unsigned int file_va);
+unsigned char va_vpn(unsigned int file_va);
 unsigned int get_offset(unsigned int file_va);
 
 // Page Table
@@ -79,7 +79,7 @@ void va_print(unsigned int file_va);
 unsigned char find_empty_frame();
 void change_frame_bit_map(unsigned char posicion);
 void print_frame_bit_map();
-void link_new_page_to_empty_frame(unsigned char VPN, unsigned int PID);
+unsigned int link_new_page_to_empty_frame(unsigned char VPN, unsigned int PID);
 void print_page_table(unsigned int PID);
 void activate_page_table(unsigned char vpn, unsigned int process_id);
 
