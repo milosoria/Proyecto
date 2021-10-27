@@ -154,6 +154,7 @@ int main( int argc, char**argv){
     printf("¿Podemos acceder a esa información?\n");
     sleep(5);
     printf("¡Claro que yes!\n");
+    sleep(3);
     printf("Implementamos una función que recibe el 'buffer' y el 'crms_file' y e imprime los datos del buffer en un archivo real, ubicado en la carpeta ROOT del proyecto.\n");
     printf("¿Shall we?\n>Press (1):");
     scanf("%i", &peo);
