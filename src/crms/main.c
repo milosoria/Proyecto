@@ -117,21 +117,40 @@ int main( int argc, char**argv){
     printf("***** ARCHIVO LIBERADO *****\n");
     printf("\n");
 
-
+    // Grandes ligas
     printf("Ahora, vamos a las grandes ligas. Ese archivo era chico, de no más de una frame, ¿qué pasa si probamos con uno de más de 8MB?\n");
-    printf("Vamos para atrás, listemos los archivos del proceso en cuestión denuevo:\n>Press(1):");
+    printf(">Press (1):");
     scanf("%i", &peo);
-    printf("CR_LS_FILES RUNNING: id = %d.\n", pid);
-    cr_ls_files(pid);
     printf("\n");
+    
 
-    printf("Del proceso anterior (pid = %d) ingrese un 'file_name'\n>file name:", pid);
-    scanf("%s", file_name);
-    printf("\n");
+    while(check){
+        printf("Vamos para atrás, elija el proceso que quiere testear:\n");
+        cr_ls_processes();
+        printf("\n");
+        printf("Ingrese un PID\n>PID:");
+        scanf("%d", &pid);
+        printf("\n");
 
-    file = cr_open(pid, file_name, 'r');
-    printf("\n");
-    printf("¡Enhorabuena! Se pudo abrir el archivo %s.\n", file->file_name);
+        printf("Listamos los archivos del proceso con id %d.\n", pid);
+        printf("CR_LS_FILES RUNNING: id = %d.\n", pid);
+        cr_ls_files(pid);
+        printf("\n");
+
+        printf("Del proceso anterior (pid = %d) ingrese un 'file_name'\n>file name:", pid);
+        scanf("%s", file_name);
+        printf("\n");
+        file = cr_open(pid, file_name, 'r');
+        printf("\n");
+
+        printf("¡Enhorabuena! Se pudo abrir el archivo %s de tamaño %i bytes.\n", file->file_name, file->size);
+        printf("¿Desea elegir otro archivo de otro proceso?\n>Sí (1), no (0):");
+        scanf("%d", &check);
+        printf("\n");
+    }
+    check = 1;
+    
+
     printf("Notamos que su tamaño en bytes es: %i, más de 8MB (=8388608 bytes).\n", file->size);
     printf("Creamos el buffer que contenga estos datos:\n");
     printf("***** CREANDO BUFFER *****\n");
@@ -162,6 +181,10 @@ int main( int argc, char**argv){
 
     printf("¡Eureka! Vemos que el archivo con nombre: %s, ha sido creado en nuestro directorio.\n", file->file_name);
     printf("¡Echémosle un ojo!\n");
+    printf("Lo abriste?\n>Press (1):");
+    scanf("%i", &peo);
+    write_file_real(buff, file);
+
 
     // Free todo.
     printf("No olvidar, hay que 'free' el buffer y cerrar el archivo (usando CR_CLOSE).\n");
