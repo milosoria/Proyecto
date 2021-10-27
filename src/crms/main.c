@@ -9,22 +9,80 @@ int main( int argc, char**argv){
     }
 
     char * memory_path  = argv[1];
-    
+
     cr_mount(memory_path);
 
-    cr_start_process(69, "coloro");
-    print_page_table(69);
-    CrmsFile * crms_file = cr_open(69, "ooweee.txt", 'w');
-    print_page_table(69);
-    //print_frame_bit_map();
-    //print_page_table(crms_file -> process_id);
+    int state = 1;
 
-    cr_delete(crms_file);
-    print_page_table(69);
+    while (state == 1)
+    {
+        int mode;
+        printf("1 -> Start a process\n2 -> Finish a process\n3 -> List processes\n0 -> End this madness\n\nEnter an integer: ");
+        scanf("%d", &mode);
 
-    //print_frame_bit_map();
-    //print_page_table(crms_file -> process_id);
+        if (mode == 1)
+        {
+            int pid;
+            printf("\nUtiliza tu imaginacion:\n\n\tID ---> ");
+            scanf("%d", &pid);
 
-    cr_close(crms_file);
+            char str[20];
+            printf("\tName -> ");
+            scanf("%s", str);
+
+            printf("\n");
+            cr_start_process(pid, str);
+        }
+
+        else if (mode == 2)
+        {
+            int show;
+
+            printf("1 -> Show frame bitmap\nOther -> Don't\n\nEnter an integer: ");
+            scanf("%d", &show);
+
+            printf("\nTienes el poder de Thanos para eliminar de la faz de memfilled.bin un proceso\n¿Que proceso deseas eliminar\nID: ");
+
+            int id;
+            scanf("%d", &id);
+
+            if(show == 1){
+                print_frame_bit_map();
+            }
+
+            cr_finish_process(id);
+
+            if(show == 1){
+                print_frame_bit_map();
+            }
+        }
+
+        else if(mode == 3){
+            printf("\nProcesos que viven en la memoria:\n\n");
+
+            cr_ls_processes();
+        }
+
+        else if (mode == 0)
+        {
+            state --;
+            break;
+        }
+
+        else
+        {
+            printf("Ups, no se que hacer con ese input\n\n");
+        }
+        int ch;
+        printf("Enter 1 and press ENTER to continue\n");
+        scanf("%d",&ch);
+
+        printf("\n\n\n-------- Pedido listo --------\n\n\n");
+        
+    }
+
+    printf("\nGRACIAS TOTALES\n");
+
+    return 0;
 
 }
