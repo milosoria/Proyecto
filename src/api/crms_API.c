@@ -42,9 +42,8 @@ void cr_ls_processes(){
     unsigned char process_name[NAMES_SIZE];
     unsigned char process_state;
     unsigned int process_id_uint;
-
     for (int i=0; i < PCB_N_ENTRIES; i++){
-        fread(&process_state,PROCESS_STATE_SIZE,1,memory); 
+        fread(&process_state,PROCESS_STATE_SIZE,1,memory);
         process_id_uint = fgetc(memory);
         // obtenemos el nombre del proceso
         fread(process_name,NAMES_SIZE,1,memory);
@@ -616,9 +615,6 @@ int cr_read(CrmsFile * file_desc, char* buffer, int n_bytes){
     printf("\tBytes por leer en esta llamada: %d.\n", n_bytes);
 
     printf("\t-- BEGIN FOR --\n");
-
-    printf("\t%i size\n",file_desc->size);
-
     // Abrimos el archivo de memoria
     FILE * memory = fopen(MEMORY_PATH, "rb");
     // Definimos el dato de memoria que se va a guardar.
