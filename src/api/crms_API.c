@@ -422,7 +422,7 @@ CrmsFile* cr_open(int process_id, char* file_name, char mode){
             }
             // Si no encontramos el proceso, retornamos ERROR
             fclose(memory);
-            printf("ERROR: no se encontro e.\n");
+            printf("ERROR: no se encontro el proceso.\n");
             return NULL;
         }
     }
