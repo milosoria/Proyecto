@@ -502,7 +502,7 @@ int cr_write_file(CrmsFile* file_desc, void * buffer, int n_bytes){
     }
     printf("\t-- END FOR --\n");
     printf("Se han escrito los %d bytes.\n", n_bytes);
-    printf("CR_READ END. Bytes escritos (output): %d.\n", n_bytes);
+    printf("CR_WRITE_FILE END. Bytes escritos (output): %d.\n", n_bytes);
     fclose(memory);
     return n_bytes;
 

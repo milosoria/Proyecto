@@ -2,6 +2,7 @@
 #include "../api/crms_API.h"
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
 //#include <byteswap.h>
 
 int main( int argc, char**argv){
@@ -15,12 +16,12 @@ int main( int argc, char**argv){
 
     int opt;
     int pid;
+    int bytes;
     char * memory_path  = argv[1];
     int check = 1;
     char file_name[20]; 
-    int bytes;
-    char* buff;
     CrmsFile* file;
+    char * buff;
 
     
 
@@ -32,18 +33,26 @@ int main( int argc, char**argv){
     cr_ls_processes();
     printf("\n");
 
+    printf("Comenzando test de CR_OPEN, modo 'w'...\n");
+    printf("Probemos abrir un archivo de un proceso no existente\n");
+    printf("Ingrese un PID no existente\n>PID:");
+    scanf("%d", &pid);
     printf("Elija el proceso que quiere testear:\n");
+
     printf("Ingrese un PID\n>PID:");
     scanf("%d", &pid);
     printf("\n");
+    file = cr_open(pid, "notgonnawork.txt", 'w');
+    printf("Bien, era de esperarse...\n");
+
+    printf("Elija el proceso que quiere testear:\n");
+    scanf("%d", &pid);
 
     printf("Listamos los archivos del proceso con id %d.\n", pid);
     printf("CR_LS_FILES RUNNING: id = %d.\n", pid);
     cr_ls_files(pid);
     printf("\n");
 
-    // FILE OPEN - r
-    printf("Comenzando test de CR_OPEN, modo 'w'.\n");
     while (check)
     {
         printf("Del proceso anterior (pid = %d) ingrese un 'file_name'\n>file name:", pid);
@@ -75,53 +84,47 @@ int main( int argc, char**argv){
     check = 1;
     exit(0);
     
-    /* printf("¡Enhorabuena! Se pudo abrir el archivo %s.\n", file->file_name); */
-    /* printf("Ahora, tenemos que leerlo, para eso usaremos CR_READ.\n"); */
-    /* printf("Para eso, debemos hacer un malloc para crear el buffer en donde vamos a guardar nuestra información\n"); */
-    /* printf("***** CREANDO BUFFER *****\n"); */
-    /* buff = malloc(file->size); */
-    /* printf("***** BUFFER CREADO *****\n"); */
-    /* printf("Listo con el malloc, ¿seguimos?\n>Press (1):"); */
-    /* scanf("%i", &peo); */
-    /* printf("\n"); */
+    printf("Ahora, probemos escribir en algun archivo, para eso usaremos CR_WRITE_FILE.\n");
+    printf("Para esto, debemos hacer un malloc para guardar en un buffer aquello que escribiremos\n");
+    printf("***** CREANDO BUFFER *****\n");
+    bytes = sizeof("Vamos por ese 7!")/ sizeof(char);
+    buff = malloc(bytes);
+    printf("***** BUFFER CREADO *****\n");
+    printf("Listo con el malloc, ¿seguimos? \n>Press (1):");
+    scanf("%i",&opt);
     
 
-    /* printf("Probemos primero si funciona leer una cantidad de bytes menor al tamaño del archivo.\n"); */
-    /* printf("STATUS: tamaño del archivo: %i, bytes leídos del archivo (total): %i, bytes restantes por leer: %i.\n", file->size, file->bytes_leidos, file->size - file->bytes_leidos); */
-    /* while (check) */
-    /* { */
-    /*     printf("¿Cuántos bytes desea leer?\n>bytes:"); */
-    /*     scanf("%d", &bytes); */
-    /*     printf("\n"); */
+    printf("Probemos primero si funciona escribir una cantidad pequeña de bytes.\n");
+    printf("STATUS: tamaño del archivo: %i, bytes leídos del archivo (total): %i, bytes restantes por leer: %i.\n", file->size, file->bytes_leidos, file->size - file->bytes_leidos);
+    strcpy(buff, "Vamos por ese 7!");
+    printf("Procedemos a escribir lo siguiente: '%s'\n",buff);
+    printf("\n");
 
-    /*     cr_read(file, buff, bytes); */
-    /*     printf("\n"); */
-    /*     printf("STATUS: tamaño del archivo: %i, bytes leídos del archivo (total): %i, bytes restantes por leer: %i.\n", file->size, file->bytes_leidos, file->size - file->bytes_leidos); */
+    cr_write_file(file, buff, bytes);
+    printf("\n");
+    printf("STATUS: tamaño del archivo: %i, bytes leídos del archivo (total): %i, bytes restantes por leer: %i.\n", file->size, file->bytes_leidos, file->size - file->bytes_leidos);
 
-    /*     printf("¿Desea ingresar otra cantidad de bytes por leer?\n>Sí (1), no (0):"); */
-    /*     scanf("%d", &check); */
-    /*     printf("\n"); */
-    /* } */
-    /* check = 1; */
+    printf("¡Muy bien! Funcionó a la perfección. Hasta ahora hemos escrito %i bytes y por lo tanto, el archivo tiene el mismo tamaño %i.\n", file->bytes_leidos, file->size);
+    printf("Pero, ¿qué pasa si escribimos una cantidad de bytes lo suficientemente grande de modo que no alcancemos a escribir todo? Probémoslo.\n");
 
-    /* printf("¡Muy bien! Funcionó a la perfección. Hasta ahora hemos leído %i bytes de los %i que posee el archivo. Quedan %i bytes por leer.\n", file->bytes_leidos, file->size, file->size - file->bytes_leidos); */
-    /* printf("Pero, ¿qué pasa si leemos una cantidad de bytes que excede la capacidad del archivo? Probémoslo.\n"); */
+    while (check)
+    {
+        printf("¿Cuántos bytes desea escribir?\n>bytes:");
+        scanf("%d", &bytes);
+        printf("\n");
 
-    /* while (check) */
-    /* { */
-    /*     printf("¿Cuántos bytes desea leer?\n>bytes:"); */
-    /*     scanf("%d", &bytes); */
-    /*     printf("\n"); */
+        char * buff2 = malloc(bytes);
+        for (int i = 0 ; i<bytes;bytes++) {
+            buff2[i] = 'a';
+        }
+        printf("\n");
+        printf("STATUS: tamaño del archivo: %i, bytes leídos del archivo (total): %i, bytes restantes por leer: %i.\n", file->size, file->bytes_leidos, file->size - file->bytes_leidos);
 
-    /*     cr_read(file, buff, bytes); */
-    /*     printf("\n"); */
-    /*     printf("STATUS: tamaño del archivo: %i, bytes leídos del archivo (total): %i, bytes restantes por leer: %i.\n", file->size, file->bytes_leidos, file->size - file->bytes_leidos); */
-
-    /*     printf("¿Desea ingresar otra cantidad de bytes por leer?\n>Sí (1), no (0):"); */
-    /*     scanf("%d", &check); */
-    /*     printf("\n"); */
-    /* } */
-    /* check = 1; */
+        printf("¿Desea ingresar otra cantidad de bytes por leer?\n>Sí (1), no (0):");
+        scanf("%d", &check);
+        printf("\n");
+    }
+    check = 1;
     /* printf("Habiendo terminado con esta pequeña prueba de read, liberamos el buffer.\n"); */
     /* printf("***** LIBERANDO BUFFER *****\n"); */
     /* free(buff); */
