@@ -12,7 +12,8 @@ int main( int argc, char**argv){
     int check = 1;
     int pid;
     char file_name[20]; 
-    char * memory_path  = argv[1];
+    char * memory_path  = argv[1]
+
     int bytes;
     char* buff;
     CrmsFile* file;
@@ -20,6 +21,7 @@ int main( int argc, char**argv){
     printf("\n");
     printf("-- FUNCIONES ARCHIVOS --\n");
     printf("\n");
+
 
     cr_mount(memory_path);
     printf("Mounted memory con string: %s.\n", argv[1]);
@@ -184,6 +186,7 @@ int main( int argc, char**argv){
     printf("Lo abriste?\n>Press (1):");
     scanf("%i", &peo);
     write_file_real(buff, file);
+
 
 
     // Free todo.
