@@ -26,12 +26,14 @@ int main( int argc, char**argv){
             printf("\nUtiliza tu imaginacion:\n\n\tID ---> ");
             scanf("%d", &pid);
 
-            char str[20];
+            char * str =  calloc(20,sizeof(char)); 
             printf("\tName -> ");
             scanf("%s", str);
 
             printf("\n");
             cr_start_process(pid, str);
+
+            free(str);
         }
 
         else if (mode == 2)
@@ -82,7 +84,6 @@ int main( int argc, char**argv){
     }
 
     printf("\nGRACIAS TOTALES\n");
-
     return 0;
 
 }

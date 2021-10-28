@@ -11,7 +11,7 @@ int main( int argc, char**argv){
     int peo;
     int check = 1;
     int pid;
-    char file_name[20]; 
+    char * file_name = calloc(20,sizeof(char));
     char * memory_path  = argv[1];
     int bytes;
     char* buff;
@@ -190,6 +190,7 @@ int main( int argc, char**argv){
     printf("No olvidar, hay que 'free' el buffer y cerrar el archivo (usando CR_CLOSE).\n");
     printf("***** LIBERANDO BUFFER *****\n");
     free(buff);
+    free(file_name);
     printf("***** BUFFER LIBERADO *****\n");
     printf("***** LIBERANDO ARCHIVO *****\n");
     cr_close(file);

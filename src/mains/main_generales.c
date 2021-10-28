@@ -11,7 +11,7 @@ int main( int argc, char**argv){
     int peo;
     int while_check = 1;
     int pid;
-    char file_name[20]; 
+    char * file_name = calloc(20,sizeof(char)); 
     char * memory_path  = argv[1];
 
     printf("\n");
@@ -68,6 +68,6 @@ int main( int argc, char**argv){
         printf("\n");
 
     }
-
+    free(file_name);
     printf("\t END MAIN\n");
 }

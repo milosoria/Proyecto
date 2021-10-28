@@ -20,7 +20,7 @@ int main( int argc, char**argv){
     char * memory_path  = argv[1];
     cr_mount(memory_path);
     int check = 1;
-    char file_name[20]; 
+    char * file_name = calloc(20,sizeof(char)); 
     CrmsFile* file;
     char * buff = malloc(bytes*sizeof(char));
     int escritos;
@@ -39,7 +39,7 @@ int main( int argc, char**argv){
     scanf("%i", &pid);
     printf("\n");
 
-    file = cr_open(pid, "notgonnawork.txt", 'w');
+    file = cr_open(pid, "notw.txt", 'w');
     printf("Bien, era de esperarse...\n");
 
     cr_ls_processes();
@@ -95,6 +95,7 @@ int main( int argc, char**argv){
     strcpy(buff, "Vamos por ese 7!");
     printf("Procedemos a escribir lo siguiente: '%s'\n",buff);
     printf("\n");
+    sleep(2);
 
     escritos = cr_write_file(file, buff, bytes);
     printf("\n");
@@ -109,38 +110,43 @@ int main( int argc, char**argv){
     sleep(2);
 
     printf("¡Muy bien! Funcionó a la perfección. Hasta ahora hemos escrito %i bytes y por lo tanto, el archivo tiene el mismo tamaño %i.\n", escritos, file->size);
-    printf("Pero, ¿qué pasa si escribimos una cantidad de bytes lo suficientemente grande de modo que no alcancemos a escribir todo? Probémoslo.\n");
-    printf("\n");
-    sleep(2);
-
-
-    printf("¿Cuántos bytes desea escribir?\n>bytes:");
-    scanf("%i", &bytes);
-    written = realloc(written,sizeof(char)* bytes);
-    char * buff2 = malloc(sizeof(char)*bytes);
-    printf("\n");
-
-    for (int i = 0 ; i<bytes;i++) {
-        buff2[i] = 'a';
-    }
-    escritos = cr_write_file(file,buff2,bytes);
-    printf("\n");
     printf("STATUS: tamaño del archivo: %i, bytes escritos: %i.\n", file->size, escritos);
+    /* printf("Pero, ¿qué pasa si escribimos una cantidad de bytes lo suficientemente grande de modo que no alcancemos a escribir todo? Probémoslo.\n"); */
+    /* printf("\n"); */
+    /* sleep(2); */
 
-    printf("\n");
-    sleep(2);
+
+    /* printf("¿Cuántos bytes desea escribir?\n>bytes:"); */
+    /* scanf("%i", &bytes); */
+    /* written = realloc(written,sizeof(char)* bytes); */
+    /* char * buff2 = calloc(bytes,sizeof(char)); */
+    /* printf("\n"); */
+
+    /* for (int i = 0; i < bytes; i++) { */
+    /*     if (i < bytes-1) buff2[i] = 'a'; */
+    /*     else buff2[i]='\0'; */
+    /* } */
+
+
+    /* escritos = cr_write_file(file,buff2,bytes); */
+    /* printf("\n"); */
+    /* printf("STATUS: tamaño del archivo: %i, bytes escritos: %i.\n", file->size, escritos); */
+
+    /* printf("\n"); */
+    /* sleep(2); */
     
-    printf("Comprobemos si fue escrito correctamente\n");
-    leidos = cr_read(file, written, bytes);
+    /* printf("Comprobemos si fue escrito correctamente\n"); */
+    /* leidos = cr_read(file, buff2, bytes); */
 
-    printf("Leimos %i bytes y obtuvimos: '%s'\n",leidos,written);
-    printf("\n");
-    sleep(2);
+    /* printf("Leimos %i bytes y obtuvimos: '%s'\n",leidos,buff2); */
+    /* printf("\n"); */
+    /* sleep(2); */
     printf("Habiendo terminado con esta pequeña prueba de write_file, liberamos el buffer.\n");
     printf("***** LIBERANDO BUFFER *****\n");
     free(buff);
+    free(file_name);
     free(written);
-    free(buff2);
+    /* free(buff2); */
     printf("***** BUFFER LIBERADO *****\n");
     // Cerrar el archivo CR_CLOSE
     printf("También hay que liberar el archivo abierto.\n");

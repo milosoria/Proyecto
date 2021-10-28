@@ -8,7 +8,7 @@ if [ $# -ne 0 ]; then
         wait
         printf "\nEmpezando tests"
         if [ $2 == "valgrind" ]; then
-            valgrind --leak-check=yes ./crms memfilled1.bin
+            valgrind --leak-check=full --show-leak-kinds=all ./crms memfilled1.bin
         else 
             ./crms memfilled1.bin
         fi
@@ -41,7 +41,7 @@ if [ $# -ne 0 ]; then
         wait
         printf "\nEmpezando tests"
         if [ $2 == "valgrind" ]; then
-            valgrind --leak-check=yes --track-origins=yes ./crms memfilled4.bin
+            valgrind --leak-check=yes ./crms memfilled4.bin
         else 
             ./crms memfilled4.bin
         fi
