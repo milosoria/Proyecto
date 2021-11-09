@@ -48,3 +48,29 @@ Luego de obtener recursos, un jugador puede realizar tantas acciones como quiera
 
 ## Interfaz por consola
 En cada turno se deben imprimir los recursos y una lista de acciones posibles, al igual que en los menus secundarios. Fuera del turno se deben imprimir los mensajes qeu informen sobre el desarrollo del juego (que hace cada jugador en su turno, excepto en el caso de espionaje)
+## Implementacion
+### Cliente
+El cliente debe recibir e imprimir los menus y/o mensajes correspondietnes y debe enviar los inputs al servidor
+### Servidor
+El servidor debe mediar la comunicacion entre los clientes. Se encarga de procesar toda la logica del juego.
+### Protocolo de comunicacion
+Todos los mensjaes enviados, tanto de parte del servidor, como de parte del cliente, deberan seguir el siguiente formato:
+- ID (1 byte): Indica el tipo de paquete
+- PayloadSize (1 byte): Corresponde al size en bytes del payload (0-255)
+- Payload (PayloadSize bytes): Es el mensaje. En caso de no requerir, el PayloadSize sera 0 y el Payload estara vacio
+## Ejecucion
+Primer argumento ip del servidor y segundo el puerto en escucha:
+        `./server -i <ip_address> -p <tcp_port>`
+        `./client -i <ip_address> -p <tcp_port>`
+
+# Documentacion
+## Integrantes:
+- Camilo Soria Aranguiz 18207979
+-
+-
+-
+-
+-
+## Instrucciones de Ejecucion
+## Descripcion de Paquetes
+## Principales Funciones y Decisiones de Diseño
