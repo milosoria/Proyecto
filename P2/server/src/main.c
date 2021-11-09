@@ -4,19 +4,11 @@
 #include "comunication.h"
 #include "conection.h"
 
-char * revert(char * message){
-    //Se invierte el mensaje
-
-    int len = strlen(message) + 1;
-    char * response = malloc(len);
-
-    for (int i = 0; i < len-1; i++)
-    {
-        response[i] = message[len-2-i];
-    }
-    response[len-1] = '\0';
-    return response;
-}
+// variables globales de niveles y recursos de los jugadores
+// [[lvl_agr,lvl_min,lvl_ing,lvl_guer],[...]]
+int ** LEVELS;
+// [[n_comida,n_oro,n_ciencia],[...]]
+int ** RESOURCES;
 
 int main(int argc, char *argv[]){
     /* ./server -i <ip_address> -p <tcp_port> */
@@ -39,38 +31,39 @@ int main(int argc, char *argv[]){
 
     // Se crea el servidor y se obtienen los sockets de ambos clientes.
     PlayersInfo * players_info = prepare_sockets_and_get_clients(IP, PORT);
+    LEVELS = calloc(players_info->n_players,sizeof(int*));
+    RESOURCES = calloc(players_info->n_players,sizeof(int*));
+    for (int i=0; i<players_info->n_players;i++){
+        server_send_message(players_info->sockets[i],1,
+                "#########################\n"
+                "El juego ha comenzado\n"
+                "#########################\n");
+        // inicializamos los valores de recursos y estadisticas
 
-    // Le enviamos al primer cliente un mensaje de bienvenida
-    server_send_message(players_info->sockets[0], 1, "Bienvenido Jugador 1!!");
-
+        LEVELS[i] = calloc(6,sizeof(int));
+        // inicializamos todos los niveles en 1
+        memset(LEVELS[i],1,4);
+        // inicializamos los recursos en 0
+        RESOURCES[i]= calloc(3,sizeof(int));
+    }
+    int turn = 0;
     // Guardaremos los sockets en un arreglo e iremos alternando a quién escuchar.
     while (1)
     {
-        // usar select() para escuchar multiples sockets y actuar en base al primer envio
-
-        /* // Se obtiene el paquete del cliente 1 */
-        /* int msg_code = server_receive_id(players_info->sockets[my_attention]); */
-
-        /* if (msg_code == 1) //El cliente me envió un mensaje a mi (servidor) */
-        /* { */
-        /*     char * client_message = server_receive_payload(players_info->sockets[my_attention]); */
-        /*     printf("El cliente %d dice: %s\n", my_attention+1, client_message); */
-
-        /*     // Le enviaremos el mismo mensaje invertido jeje */
-        /*     char * response = revert(client_message); */
-
-        /*     // Le enviamos la respuesta */
-        /*     server_send_message(players_info->sockets[my_attention], 1, response); */
-        /* } */
-        /* else if (msg_code == 2){ //El cliente le envía un mensaje al otro cliente */
-        /*     char * client_message = server_receive_payload(players_info->sockets[my_attention]); */
-        /*     printf("Servidor traspasando desde %d a %d el mensaje: %s\n", my_attention+1, ((my_attention+1)%2)+1, client_message); */
-
-        /*     // Mi atención cambia al otro socket */
-        /*     my_attention = (my_attention + 1) % 2; */
-
-        /*     server_send_message(players_info->sockets[my_attention], 2, client_message); */
-        /* } */
+        for (int i=0; i<players_info->n_players;i++){
+            // Flujo Turno:
+            // 1. Recolectar recursos del jugador turn
+            // 2. Elegir una opcion:
+                //  - Mostrar informacion (funcion)
+                //  - Crear aldeano (funcion)
+                //  - Subir de nivel (funcion)
+                //  - Atacar (funcion)
+                //  - Espiar (funcion)
+                //  - Robar (funcion)
+                //  - Pasar (funcion)
+                //  - Rendirse (funcion)
+            // Entregar turno al siguiente jugador activo
+        }
         printf("------------------\n");
     }
 

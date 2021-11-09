@@ -73,5 +73,13 @@ Primer argumento ip del servidor y segundo el puerto en escucha:
 -
 ## Instrucciones de Ejecucion
 ## Descripcion de Paquetes
-- ID:1 Mensaje para imprimir en consola
+### Servidor
+- ID:0 Comienzo del juego
+- ID:1 Mensaje para imprimir en consola sin esperar respuesta (logs)
+- ID:2 Mensaje pidiendo nombre
+- ID:3 Mensaje pidiendo aldeanos por tipo
+### Cliente
+- ID:0 Iniciar juego (proveniente del jugador jefe)
+- ID:1 Nombre
+- ID:2 `tipo_aldeano+cantidad`, m5 (cinco mineros), i4 (cinco ingenieros), en un mensaje: m5i4
 ## Principales Funciones y Decisiones de Diseño

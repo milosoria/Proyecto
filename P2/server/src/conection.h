@@ -11,7 +11,12 @@
 
 typedef struct players_info{
     int n_players;
-    int sockets[];
+    int sockets[4];
+    // liberar
+    char ** names;
+    // liberar
+    // arreglo de la forma [[agricultores,mineros,ingenieros,guerreros],[...]], tienen que sumar 9
+    int * villagers[4];
 } PlayersInfo;
 
 PlayersInfo * prepare_sockets_and_get_clients(char * IP, int port);
