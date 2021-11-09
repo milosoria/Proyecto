@@ -18,13 +18,13 @@ int main( int argc, char**argv){
     {
         int mode;
         printf("1 -> Start a process\n2 -> Finish a process\n3 -> List processes\n0 -> End this madness\n\nEnter an integer: ");
-        scanf("%d", &mode);
+        scanf("%i", &mode);
 
         if (mode == 1)
         {
             int pid;
             printf("\nUtiliza tu imaginacion:\n\n\tID ---> ");
-            scanf("%d", &pid);
+            scanf("%i", &pid);
 
             char * str =  calloc(20,sizeof(char)); 
             printf("\tName -> ");
@@ -41,12 +41,12 @@ int main( int argc, char**argv){
             int show;
 
             printf("1 -> Show frame bitmap\nOther -> Don't\n\nEnter an integer: ");
-            scanf("%d", &show);
+            scanf("%i", &show);
 
             printf("\nTienes el poder de Thanos para eliminar de la faz de memfilled.bin un proceso\n¿Que proceso deseas eliminar\nID: ");
 
             int id;
-            scanf("%d", &id);
+            scanf("%i", &id);
 
             if(show == 1){
                 print_frame_bit_map();
@@ -77,7 +77,7 @@ int main( int argc, char**argv){
         }
         int ch;
         printf("Enter 1 and press ENTER to continue\n");
-        scanf("%d",&ch);
+        scanf("%i",&ch);
 
         printf("\n\n\n-------- Pedido listo --------\n\n\n");
         

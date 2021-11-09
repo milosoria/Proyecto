@@ -42,8 +42,9 @@ void cr_ls_processes(){
     unsigned char process_name[NAMES_SIZE];
     unsigned char process_state;
     unsigned int process_id_uint;
+
     for (int i=0; i < PCB_N_ENTRIES; i++){
-        fread(&process_state,PROCESS_STATE_SIZE,1,memory);
+        fread(&process_state,PROCESS_STATE_SIZE,1,memory); 
         process_id_uint = fgetc(memory);
         // obtenemos el nombre del proceso
         fread(process_name,NAMES_SIZE,1,memory);
@@ -422,7 +423,7 @@ CrmsFile* cr_open(int process_id, char* file_name, char mode){
             }
             // Si no encontramos el proceso, retornamos ERROR
             fclose(memory);
-            printf("ERROR: no se encontro el proceso.\n");
+            printf("ERROR: no se encontro e.\n");
             return NULL;
         }
     }
@@ -481,7 +482,7 @@ int cr_write_file(CrmsFile* file_desc, void * buffer, int n_bytes){
             /* • Se termina el espacio contiguo en la memoria virtual, es lo mismo esto que no encontrar frames disponibles? */
         } else {
             // seguimos en la misma pagina
-            // nos movemos a la direccion fisica pero sumando size
+            // nos movemos a la direccion fisica
             fseek(memory, dir_actual+file_desc->size, SEEK_SET);
             // escribimos un byte
             unsigned char byte = *(unsigned char*) &buffer[file_desc->size]; 
@@ -502,7 +503,7 @@ int cr_write_file(CrmsFile* file_desc, void * buffer, int n_bytes){
     }
     printf("\t-- END FOR --\n");
     printf("Se han escrito los %d bytes.\n", n_bytes);
-    printf("CR_WRITE_FILE END. Bytes escritos (output): %d.\n", n_bytes);
+    printf("CR_READ END. Bytes escritos (output): %d.\n", n_bytes);
     fclose(memory);
     return n_bytes;
 
@@ -615,6 +616,9 @@ int cr_read(CrmsFile * file_desc, char* buffer, int n_bytes){
     printf("\tBytes por leer en esta llamada: %d.\n", n_bytes);
 
     printf("\t-- BEGIN FOR --\n");
+
+    printf("\t%i size\n",file_desc->size);
+
     // Abrimos el archivo de memoria
     FILE * memory = fopen(MEMORY_PATH, "rb");
     // Definimos el dato de memoria que se va a guardar.

@@ -90,11 +90,13 @@ int main( int argc, char**argv){
     scanf("%i",&opt);
     
 
-    printf("Probemos primero si funciona escribir una cantidad pequeña de bytes.\n");
+    printf("Probemos si funciona escribir...\n");
     printf("STATUS: tamaño del archivo: %i, bytes restantes por escribir: %i.\n", file->size, bytes);
     strcpy(buff, "Vamos por ese 7!");
+    sleep(2);
     printf("Procedemos a escribir lo siguiente: '%s'\n",buff);
     printf("\n");
+    sleep(2);
 
     escritos = cr_write_file(file, buff, bytes);
     printf("\n");
@@ -110,36 +112,7 @@ int main( int argc, char**argv){
 
     printf("¡Muy bien! Funcionó a la perfección. Hasta ahora hemos escrito %i bytes y por lo tanto, el archivo tiene el mismo tamaño %i.\n", escritos, file->size);
     printf("STATUS: tamaño del archivo: %i, bytes escritos: %i.\n", file->size, escritos);
-    /* printf("Pero, ¿qué pasa si escribimos una cantidad de bytes lo suficientemente grande de modo que no alcancemos a escribir todo? Probémoslo.\n"); */
-    /* printf("\n"); */
-    /* sleep(2); */
 
-
-    /* printf("¿Cuántos bytes desea escribir?\n>bytes:"); */
-    /* scanf("%i", &bytes); */
-    /* written = realloc(written,sizeof(char)* bytes); */
-    /* char * buff2 = calloc(bytes,sizeof(char)); */
-    /* printf("\n"); */
-
-    /* for (int i = 0; i < bytes; i++) { */
-    /*     if (i < bytes-1) buff2[i] = 'a'; */
-    /*     else buff2[i]='\0'; */
-    /* } */
-
-
-    /* escritos = cr_write_file(file,buff2,bytes); */
-    /* printf("\n"); */
-    /* printf("STATUS: tamaño del archivo: %i, bytes escritos: %i.\n", file->size, escritos); */
-
-    /* printf("\n"); */
-    /* sleep(2); */
-    
-    /* printf("Comprobemos si fue escrito correctamente\n"); */
-    /* leidos = cr_read(file, buff2, bytes); */
-
-    /* printf("Leimos %i bytes y obtuvimos: '%s'\n",leidos,buff2); */
-    /* printf("\n"); */
-    /* sleep(2); */
     printf("Habiendo terminado con esta pequeña prueba de write_file, liberamos el buffer.\n");
     printf("***** LIBERANDO BUFFER *****\n");
     free(buff);
