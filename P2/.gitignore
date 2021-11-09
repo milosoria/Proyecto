@@ -1,0 +1,7 @@
+**
+!src/**
+!run.sh
+!src/
+!Makefile
+!*.md
+!.gitignore
