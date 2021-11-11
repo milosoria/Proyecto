@@ -14,7 +14,7 @@ LIB=$(GTK) $(MTH)
 FILES := $(wildcard src/*.c)
 
 all: $(FILES)
-	gcc -o server $(FILES) $(CFLAGS) $(LIB) -I./src/
+	@gcc -o server $(FILES) $(CFLAGS) $(LIB) -I./src/
 
 clean: 
 	@rm -fv server && rm -rfv obj && echo "done cleaning"

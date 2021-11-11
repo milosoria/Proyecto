@@ -10,10 +10,12 @@ int client_receive_id(int client_socket){
 char * client_receive_payload(int client_socket){
   // Se obtiene el largo del payload
   int len = 0;
-  recv(client_socket, &len, 1, 0);
+  int returned = recv(client_socket, &len, 1, 0);
+  printf("Value returned from returned %i\n",returned);
   // Se obtiene el payload
   char * payload = malloc(len);
   int received = recv(client_socket, payload, len, 0);
+  printf("Value returned from received %i\n",received);
   // Se retorna
   return payload;
 }
