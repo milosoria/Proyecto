@@ -75,7 +75,8 @@ PlayersInfo *prepare_sockets_and_get_clients(char *IP, int port) {
     // clientes.
     PlayersInfo *clients_sockets = malloc(sizeof(PlayersInfo));
     // es necesario liberar el sockets_clients
-    *clients_sockets = (PlayersInfo){.n_players = 0,
+    *clients_sockets = (PlayersInfo){
+        .n_players = 0,
         .sockets = {0},
         .names = calloc(4, sizeof(char *)),
         .villagers = calloc(4, sizeof(int *))};
@@ -169,12 +170,11 @@ PlayersInfo *prepare_sockets_and_get_clients(char *IP, int port) {
                     } else {
                         if (id == 1) {
                             // hay que liberarlo despues
-                            clients_sockets->names[clients_sockets->n_players] =
+                            clients_sockets->names[i] =
                                 malloc(sizeof(buffer) / sizeof(char));
-                            strcpy(clients_sockets->names[clients_sockets->n_players],
+                            strcpy(clients_sockets->names[i],
                                     buffer);
-                            sprintf(to_send, "Se ha conectado un nuevo jugador %s\n", buffer);
-                            server_send_message(clients_sockets->sockets[0], 0, to_send);
+                            sprintf(to_send, "Se ha conectado un nuevo jugador %s\n", buffer); server_send_message(clients_sockets->sockets[0], 0, to_send);
                             free(buffer);
                             names_count++;
                         } else if (id == 2) {
@@ -202,7 +202,7 @@ PlayersInfo *prepare_sockets_and_get_clients(char *IP, int port) {
                             }
                             // repartio correctamente el numero de aldeanos
                             if (count == 9) {
-                                clients_sockets->villagers[clients_sockets->n_players] = roles;
+                                clients_sockets->villagers[i] = roles;
                                 villagers_count++;
                             } else {
                                 server_send_message(
@@ -212,7 +212,7 @@ PlayersInfo *prepare_sockets_and_get_clients(char *IP, int port) {
                             // el jugador jefe, solicita iniciar el juego
                             if (i == clients_sockets->sockets[0]) {
                                 if (villagers_count == clients_sockets->n_players &&
-                                        villagers_count == clients_sockets->n_players) {
+                                        names_count == clients_sockets->n_players) {
                                     for (int k = 0; k < clients_sockets->n_players; k++) {
                                         server_send_message(clients_sockets->sockets[k], 0,
                                                 "Comienza el juego, PREPARAD@S???\n");

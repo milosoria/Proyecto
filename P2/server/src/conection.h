@@ -1,3 +1,4 @@
+#pragma once
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,7 +17,9 @@ typedef struct players_info{
     char ** names;
     // liberar
     // arreglo de la forma [[agricultores,mineros,ingenieros,guerreros],[...]], tienen que sumar 9
-    int * villagers[4];
+    int ** villagers;
+    int ** levels;
+    int ** resources;
 } PlayersInfo;
 
 PlayersInfo * prepare_sockets_and_get_clients(char * IP, int port);
