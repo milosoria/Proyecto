@@ -12,6 +12,7 @@
 
 typedef struct players_info{
     int n_players;
+    int server_socket;
     int sockets[4];
     // liberar
     char ** names;

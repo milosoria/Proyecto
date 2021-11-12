@@ -79,10 +79,11 @@ Primer argumento ip del servidor y segundo el puerto en escucha:
 - ID:2 Mensaje pidiendo nombre
 - ID:3 Mensaje pidiendo aldeanos por tipo
 - ID:4 Mensajes interactivos (jugadas)
+- ID:5 Mensaje indicando que el juego puede comenzar
 ### Cliente
 - ID:0 Iniciar juego (proveniente del jugador jefe)
 - ID:1 Nombre
-- ID:2 `tipo_aldeano+cantidad`, m5 (cinco mineros), i4 (cinco ingenieros), en un mensaje: m5i4
+- ID:2 Distribucion de aldeanos iniciales 
 - ID:3 Jugada
 - ID:4 Jugada Opciones
 ## Principales Funciones y Decisiones de Diseño

@@ -11,6 +11,9 @@ int main(int argc, char *argv[]) {
     /* ./server -i <ip_address> -p <tcp_port> */
     if (argc < 5) {
         printf("The correct use is ./server -i <ip_address> -p <tcp_port>");
+    } else {
+        printf("#########################\n");
+        printf("SERVER STARTED!\n");
     }
 
     char *IP;
@@ -37,6 +40,7 @@ int main(int argc, char *argv[]) {
                 "#########################\n");
         // inicializamos los valores de recursos y estadisticas
 
+        // nivel aldeanos (3) y ataque,defensa
         players_info->levels[i] = calloc(6, sizeof(int));
         // inicializamos todos los niveles en 1
         memset(players_info->levels[i], 1, 4);
@@ -86,7 +90,7 @@ int main(int argc, char *argv[]) {
                     "#########################\n",
                     players_info->names[player]);
             server_send_message(players_info->sockets[player], 4, buffer);
-            while (play_selected != 8) {
+            while (play_selected != 8 || play_selected != 7) {
                 id = server_receive_id(players_info->sockets[player]);
                 payload = server_receive_payload(players_info->sockets[player]);
                 play_selected = play(player, payload, players_info);
@@ -96,6 +100,7 @@ int main(int argc, char *argv[]) {
         }
         printf("------------------\n");
     }
-
+    free(IP);
+    close(players_info->server_socket);
     return 0;
 }
