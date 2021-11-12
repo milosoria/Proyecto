@@ -18,12 +18,12 @@ int main(int argc, char *argv[]) {
 
     char *IP;
     int PORT;
-    if (strcmp(argv[1], "-i")) {
+    if (strcmp(argv[1], "-i") == 0) {
         IP = argv[2];
     } else {
         IP = "0.0.0.0";
     }
-    if (strcmp(argv[3], "-p")) {
+    if (strcmp(argv[3], "-p")==0) {
         PORT = (int)*argv[4];
     } else {
         PORT = 8080;
