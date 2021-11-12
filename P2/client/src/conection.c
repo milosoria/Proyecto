@@ -14,9 +14,12 @@ int prepare_socket(char * IP, int PORT){
     inet_aton(IP, &server_addr.sin_addr);
     // Se pide una conexión al servidor
     int ret = connect(client_socket, (struct sockaddr*)&server_addr, sizeof(server_addr));
-
-    char buf[1];
-    recv(client_socket, buf, 1, MSG_WAITFORONE);
-    printf("First ping recieved, ready to operate\n");
     return client_socket;
+}
+
+char * alloc_for_string(char * string,char* src){
+    int len = strlen(string) +1;
+    char * buffer = calloc(len,sizeof(string));
+    sprintf(buffer,string,src);
+    return buffer;
 }

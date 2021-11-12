@@ -15,6 +15,7 @@ char *server_receive_payload(int client_socket) {
     // Se obtiene el largo del payload
     int len = 0;
     recv(client_socket, &len, 1, 0);
+
     if (!len) {
         return NULL;
     } else {

@@ -14,3 +14,4 @@
 #include "comunication.h"
 
 int prepare_socket(char * IP, int PORT);
+char * alloc_for_string(char * string,char* src);

@@ -46,7 +46,7 @@ int main(int argc, char *argv[]) {
         pkg_id = client_receive_id(server_socket);
 
         if (pkg_id == 1) { // Recibimos un mensaje del servidor
-            char *message = client_receive_payload(server_socket);
+            char * message = client_receive_payload(server_socket);
             printf("%s", message);
             free(message);
 
@@ -57,7 +57,7 @@ int main(int argc, char *argv[]) {
             int option = 1;
             client_send_message(server_socket, option, response);
         } else if (pkg_id ==3){
-            char *response = calloc(4,sizeof(char));
+            char *response = calloc(5,sizeof(char));
             printf("Ingrese la distribucion de los 9 aldeanos iniciales:\n\n");
             printf("Cuantos aldeanos quieres de agricultores?: ");
             response[0] = getchar();
@@ -79,6 +79,7 @@ int main(int argc, char *argv[]) {
             printf("GUER: %c\n",response[3]);
             getchar();
             printf("\n");
+            response[4] = '\0';
             int option = 2;
             client_send_message(server_socket, option, response);
         } else if (pkg_id==4){

@@ -49,7 +49,7 @@ int main(int argc, char *argv[]) {
     }
     int player = 0;
     int play_selected = 0;
-    char buffer[300];
+    char *buffer;
     int id;
     char *payload;
     // Guardaremos los sockets en un arreglo e iremos alternando a quién escuchar.
@@ -70,14 +70,14 @@ int main(int argc, char *argv[]) {
             //  - Robar (funcion)
             //  - Pasar (funcion)
             //  - Rendirse (funcion)
-            sprintf(buffer,
+            buffer = alloc_for_string(
                     "#########################\n"
                     "Jugadores, es el turno de %s\n"
-                    "#########################\n",
-                    players_info->names[player]);
+                    "#########################\n",players_info->names[player]);
+
             log_all(buffer, 1, players_info);
-            sprintf(buffer,
-                    "#########################\n"
+            free(buffer);
+            buffer = alloc_for_string(
                     "Jugador %s, que deseas hacer en este turno:\n"
                     "(1) Mostrar Informacion \n"
                     "(2) Crear Aldeano \n"
@@ -87,9 +87,9 @@ int main(int argc, char *argv[]) {
                     "(6) Robar \n"
                     "(7) Rendirse \n"
                     "(8) Pasar \n"
-                    "#########################\n",
-                    players_info->names[player]);
+                    "#########################\n",players_info->names[player]);
             server_send_message(players_info->sockets[player], 4, buffer);
+            free(buffer);
             while (play_selected != 8 || play_selected != 7) {
                 id = server_receive_id(players_info->sockets[player]);
                 payload = server_receive_payload(players_info->sockets[player]);
