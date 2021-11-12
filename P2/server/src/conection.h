@@ -24,3 +24,4 @@ typedef struct players_info{
 } PlayersInfo;
 
 PlayersInfo * prepare_sockets_and_get_clients(char * IP, int port);
+char * alloc_for_string(char * string,char* src);

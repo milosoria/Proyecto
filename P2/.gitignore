@@ -1,5 +1,6 @@
 **
-!run.sh
+client/run.sh
+server/run.sh
 !server/
 !client/
 !server/**

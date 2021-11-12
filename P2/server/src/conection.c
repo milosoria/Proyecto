@@ -14,6 +14,13 @@
 // https://www.man7.org/linux/man-pages/man2/bind.2.html
 // https://www.man7.org/linux/man-pages/man2/accept.2.html
 
+char * alloc_for_string(char * string,char* src){
+    int len = strlen(string) +1;
+    char * buffer = calloc(len,sizeof(string));
+    sprintf(buffer,string,src);
+    return buffer;
+}
+
 PlayersInfo *prepare_sockets_and_get_clients(char *IP, int port) {
 
     // Se define la estructura para almacenar info del socket del servidor al
@@ -81,7 +88,7 @@ PlayersInfo *prepare_sockets_and_get_clients(char *IP, int port) {
 
     char *buffer;
     int names_count=0, villagers_count=0, advised = 0;
-    char to_send[200];
+    char * to_send;
 
     int id, to_read, cli_sock;
     fd_set read_set;
@@ -93,10 +100,9 @@ PlayersInfo *prepare_sockets_and_get_clients(char *IP, int port) {
 
         if (villagers_count == players_info->n_players &&
                 names_count == players_info->n_players && !advised && players_info->n_players>1) {
-                   printf("new loop iteratin, villagers: %i, names: %i, advised: %i\n",villagers_count == players_info->n_players,names_count==players_info->n_players,!advised); 
                    server_send_message(
                     players_info->sockets[0], 5,
-                    "Por favor empezar el juego, todos l@s jugadores esperan\n");
+                    "Por favor empezar el juego, tod@s l@s jugadores esperan\n");
             advised = 1;
         } // recorremos los sockets actuales en cada iteracion
         // inicializamos el set de sockets vacio
@@ -130,8 +136,6 @@ PlayersInfo *prepare_sockets_and_get_clients(char *IP, int port) {
             }
 
             printf("New connection, socket descriptor %d\n", cli_sock);
-            // mandamos un mensaje ping para que el codigo del cliente continue
-            send(cli_sock, "1", 1, 0);
             players_info->n_players++;
             for (int player = 0; player < players_info->n_players; player++) {
 
@@ -180,10 +184,9 @@ PlayersInfo *prepare_sockets_and_get_clients(char *IP, int port) {
                 // es necesario liberar el buffer despues
                 if (id == 1) {
                     // hay que liberarlo despues
-                    players_info->names[player] = malloc(len);
+                    players_info->names[player] = calloc(len,sizeof(char));
                     memcpy(players_info->names[player], buffer,len);
-                    sprintf(to_send, "Se ha conectado un nuevo jugador con nombre %s\n",
-                            buffer);
+                    to_send = alloc_for_string( "Se ha conectado un nuevo jugador con nombre %s\n",buffer);
                     server_send_message(players_info->sockets[0], 1, to_send);
                     names_count++;
                 } else if (id == 2) {
@@ -229,3 +232,4 @@ PlayersInfo *prepare_sockets_and_get_clients(char *IP, int port) {
         }
     }
 }
+
