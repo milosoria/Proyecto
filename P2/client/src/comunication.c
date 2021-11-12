@@ -10,12 +10,10 @@ int client_receive_id(int client_socket){
 char * client_receive_payload(int client_socket){
   // Se obtiene el largo del payload
   int len = 0;
-  int returned = recv(client_socket, &len, 1, 0);
-  printf("Value returned from returned %i\n",returned);
+  int returned_payload_size = recv(client_socket, &len, 1, 0);
   // Se obtiene el payload
   char * payload = malloc(len);
-  int received = recv(client_socket, payload, len, 0);
-  printf("Value returned from received %i\n",received);
+  int returned_payload = recv(client_socket, payload, len, 0);
   // Se retorna
   return payload;
 }
@@ -23,7 +21,7 @@ char * client_receive_payload(int client_socket){
 void client_send_message(int client_socket, int pkg_id, char * message){
   int payloadSize = strlen(message) + 1; //+1 para considerar el caracter nulo. 
   //Esto solo es válido para strings, Ustedes cuando armen sus paquetes saben exactamente cuantos bytes tiene el payload.
-  
+
   // Se arma el paquete
   char msg[1+1+payloadSize];
   msg[0] = pkg_id;

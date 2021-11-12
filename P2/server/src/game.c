@@ -25,7 +25,8 @@ void recollect(int player, PlayersInfo *players_info) {
 
 void log_all(char *message, int pkg_id, PlayersInfo *players_info) {
     for (int i = 0; i < players_info->n_players; i++) {
-        server_send_message(players_info->sockets[i], pkg_id, message);
+        if (players_info->sockets[i])
+            server_send_message(players_info->sockets[i], pkg_id, message);
     }
 }
 
