@@ -70,16 +70,17 @@ PlayersInfo *prepare_sockets_and_get_clients(char *IP, int port) {
     socklen_t addr_size = sizeof(client1_addr);
     // Se inicializa una estructura propia para guardar los n°s de sockets de los
     // clientes.
-    PlayersInfo *clients_sockets = malloc(sizeof(PlayersInfo));
+    PlayersInfo *players_info = malloc(sizeof(PlayersInfo));
     // es necesario liberar el sockets_clients
-    *clients_sockets = (PlayersInfo){.n_players = 0,
+    *players_info = (PlayersInfo){
+        .n_players = 0,
         .sockets = {0},
         .server_socket = server_socket,
         .names = calloc(4, sizeof(char *)),
         .villagers = calloc(4, sizeof(int *))};
 
     char *buffer;
-    int names_count, villagers_count, advised = 0;
+    int names_count=0, villagers_count=0, advised = 0;
     char to_send[200];
 
     int id, to_read, cli_sock;
@@ -89,10 +90,12 @@ PlayersInfo *prepare_sockets_and_get_clients(char *IP, int port) {
     // indicador si es que el jugador lider determina empezar y se cumplen las
     // restricciones
     while (1) {
-        if (villagers_count == clients_sockets->n_players &&
-                names_count == clients_sockets->n_players && !advised) {
-            server_send_message(
-                    clients_sockets->sockets[0], 1,
+
+        if (villagers_count == players_info->n_players &&
+                names_count == players_info->n_players && !advised && players_info->n_players>1) {
+                   printf("new loop iteratin, villagers: %i, names: %i, advised: %i\n",villagers_count == players_info->n_players,names_count==players_info->n_players,!advised); 
+                   server_send_message(
+                    players_info->sockets[0], 5,
                     "Por favor empezar el juego, todos l@s jugadores esperan\n");
             advised = 1;
         } // recorremos los sockets actuales en cada iteracion
@@ -101,9 +104,9 @@ PlayersInfo *prepare_sockets_and_get_clients(char *IP, int port) {
         // luego ponemos el listener (server) dentro del set
         FD_SET(server_socket, &read_set);
         // agreagamos socket de clientes al set
-        for (int i = 0; i < clients_sockets->n_players; i++) {
+        for (int i = 0; i < players_info->n_players; i++) {
             // socket descriptor
-            cli_sock = clients_sockets->sockets[i];
+            cli_sock = players_info->sockets[i];
 
             // if valid socket descriptor then add to read list
             if (cli_sock > 0)
@@ -120,7 +123,7 @@ PlayersInfo *prepare_sockets_and_get_clients(char *IP, int port) {
         } 
 
         if (FD_ISSET(server_socket, &read_set)) {
-            cli_sock = accept(server_socket, (SA *)&clients_addrs[clients_sockets->n_players], &addr_size);
+            cli_sock = accept(server_socket, (SA *)&clients_addrs[players_info->n_players], &addr_size);
             if (cli_sock < 0) {
                 printf("accept error! %s\n", strerror(errno));
                 exit(EXIT_FAILURE);
@@ -129,36 +132,36 @@ PlayersInfo *prepare_sockets_and_get_clients(char *IP, int port) {
             printf("New connection, socket descriptor %d\n", cli_sock);
             // mandamos un mensaje ping para que el codigo del cliente continue
             send(cli_sock, "1", 1, 0);
-            clients_sockets->n_players++;
-            for (int player = 0; player < clients_sockets->n_players; player++) {
+            players_info->n_players++;
+            for (int player = 0; player < players_info->n_players; player++) {
 
-                if (clients_sockets->sockets[player] == 0) {
-                    clients_sockets->sockets[player] = cli_sock;
+                if (players_info->sockets[player] == 0) {
+                    players_info->sockets[player] = cli_sock;
                     // aumentamos uno a la cuenta de los jugadores
                     // redefinimos el max_sock si es que existe uno mayor
                     if (cli_sock > max_sock) {
                         max_sock = cli_sock;
                     }
-                    if (clients_sockets->n_players == 1) {
+                    if (players_info->n_players == 1) {
                         // si es el primer jugador, entonces es asignado como el jugador
                         // lider
                         server_send_message(
-                                clients_sockets->sockets[player], 1,
+                                players_info->sockets[player], 1,
                                 "Bienvenido nuevo jugador! Eres el primero y por ende, el "
                                 "jugador jefe\n\n"
                                 "Es tu responsabilidad solicitar cuando inciar el juego\n"
                                 "Por favor sigue las instrucciones con cuidado\n");
                     } else {
                         // a cualquier otro jugador, le damos la bienvenida
-                        server_send_message(clients_sockets->sockets[player], 1,
+                        server_send_message(players_info->sockets[player], 1,
                                 "Bienvenido nuevo jugador! Por favor sigue"
                                 "las instrucciones con cuidado\n\n");
                     }
                     // a todos los jugadores les pedimos su nombre y que distribuyan a sus
                     // aldeanos
-                    server_send_message(clients_sockets->sockets[player], 2, "Debes enviar tu nombre de jugador\n");
+                    server_send_message(players_info->sockets[player], 2, "Debes enviar tu nombre de jugador\n");
                     server_send_message(
-                            clients_sockets->sockets[player], 3,
+                            players_info->sockets[player], 3,
                             "Tienes 9 aldeanos iniciales, como deseas distribuirlos?\n\n");
                     FD_SET(cli_sock,&read_set);
                     break;
@@ -166,24 +169,24 @@ PlayersInfo *prepare_sockets_and_get_clients(char *IP, int port) {
             }
         }
 
-        for (int player = 0; player < clients_sockets->n_players; player++) {
-            cli_sock = clients_sockets->sockets[player];
+        for (int player = 0; player < players_info->n_players; player++) {
+            cli_sock = players_info->sockets[player];
             // comprobamos i pertenece al set read_set
             if (FD_ISSET(cli_sock, &read_set)) {
                 // recibimos mensaje
                 id = server_receive_id(cli_sock);
                 buffer = server_receive_payload(cli_sock);
+                int len = strlen(buffer)+1;
                 // es necesario liberar el buffer despues
                 if (id == 1) {
                     // hay que liberarlo despues
-                    clients_sockets->names[player] = malloc(strlen(buffer));
-                    strcpy(clients_sockets->names[player], buffer);
+                    players_info->names[player] = malloc(len);
+                    memcpy(players_info->names[player], buffer,len);
                     sprintf(to_send, "Se ha conectado un nuevo jugador con nombre %s\n",
                             buffer);
-                    server_send_message(clients_sockets->sockets[0], 1, to_send);
+                    server_send_message(players_info->sockets[0], 1, to_send);
                     names_count++;
                 } else if (id == 2) {
-                    int len = strlen(buffer);
                     int count = 0;
                     int *roles = calloc(4, sizeof(int));
                     for (int i=0;i<4;i++){
@@ -191,31 +194,31 @@ PlayersInfo *prepare_sockets_and_get_clients(char *IP, int port) {
                     }
                     // repartio correctamente el numero de aldeanos
                     if (count == 9) {
-                        memcpy(roles,buffer,strlen(buffer));
-                        clients_sockets->villagers[player] = roles;
+                        memcpy(roles,buffer,len);
+                        players_info->villagers[player] = roles;
                         villagers_count++;
-                        server_send_message(clients_sockets->sockets[player], 1,
+                        server_send_message(players_info->sockets[player], 1,
                                 "Su distribucion ha sido guardada, comenzara la partida cuando el jugador lider lo indique\n");
                     } else {
-                        server_send_message(clients_sockets->sockets[player], 1,
+                        server_send_message(players_info->sockets[player], 1,
                                 "Distribuya correctamente sus 9 aldeanos\n");
                         server_send_message(
-                                clients_sockets->sockets[player], 3,
+                                players_info->sockets[player], 3,
                                 "Tienes 9 aldeanos iniciales, como deseas distribuirlos?\n\n");
                     }
                 } else if (id == 0) {
                     // el jugador jefe, solicita iniciar el juego
-                    if (cli_sock == clients_sockets->sockets[0]) {
+                    if (cli_sock == players_info->sockets[0]) {
                         // comprobamos si todos definieron sus aldeanos e ingresaron nombre
-                        if (villagers_count == clients_sockets->n_players &&
-                                names_count == clients_sockets->n_players) {
-                            for (int k = 0; k < clients_sockets->n_players; k++) {
-                                server_send_message(clients_sockets->sockets[k], 0,
+                        if (villagers_count == players_info->n_players &&
+                                names_count == players_info->n_players) {
+                            for (int k = 0; k < players_info->n_players; k++) {
+                                server_send_message(players_info->sockets[k], 0,
                                         "Comienza el juego, PREPARAD@S???\n");
                             }
-                            return clients_sockets;
+                            return players_info;
                         } else {
-                            server_send_message(clients_sockets->sockets[0], 1,
+                            server_send_message(players_info->sockets[0], 1,
                                     "Faltan jugadores por definir sus "
                                     "nombres y distribuir sus aldeanos\n");
                         }

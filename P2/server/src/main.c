@@ -40,7 +40,8 @@ int main(int argc, char *argv[]) {
                 "#########################\n");
         // inicializamos los valores de recursos y estadisticas
 
-        players_info->levels[i] = calloc(6, sizeof(int));
+        // nivel aldeanos (3) y ataque,defensa
+        players_info->levels[i] = calloc(5, sizeof(int));
         // inicializamos todos los niveles en 1
         memset(players_info->levels[i], 1, 4);
         // inicializamos los recursos en 0

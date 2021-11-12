@@ -84,8 +84,13 @@ int main(int argc, char *argv[]) {
         } else if (pkg_id==4){
             printf("Ingrese su Jugada: ");
             char response[1] = {getchar() - '0'};
-            //char * response = get_input();
             int option = 1;
+            client_send_message(server_socket, option, response);
+        } else if (pkg_id == 5){
+            printf("Desea iniciar la partida?: ");
+            char response[1] = {getchar() - '0'};
+            printf("\n");
+            int option = 0;
             client_send_message(server_socket, option, response);
         }
     }

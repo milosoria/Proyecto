@@ -79,6 +79,7 @@ Primer argumento ip del servidor y segundo el puerto en escucha:
 - ID:2 Mensaje pidiendo nombre
 - ID:3 Mensaje pidiendo aldeanos por tipo
 - ID:4 Mensajes interactivos (jugadas)
+- ID:5 Mensaje indicando que el juego puede comenzar
 ### Cliente
 - ID:0 Iniciar juego (proveniente del jugador jefe)
 - ID:1 Nombre
