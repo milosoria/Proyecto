@@ -194,15 +194,16 @@ PlayersInfo *prepare_sockets_and_get_clients(char *IP, int port) {
                     int *roles = calloc(4, sizeof(int));
                     for (int i=0;i<4;i++){
                         count += (int)(buffer[i]-'0');
+                        roles[i]= (int)(buffer[i]-'0');
                     }
                     // repartio correctamente el numero de aldeanos
                     if (count == 9) {
-                        memcpy(roles,buffer,len);
                         players_info->villagers[player] = roles;
                         villagers_count++;
                         server_send_message(players_info->sockets[player], 1,
                                 "Su distribucion ha sido guardada, comenzara la partida cuando el jugador lider lo indique\n");
                     } else {
+                        free(roles);
                         server_send_message(players_info->sockets[player], 1,
                                 "Distribuya correctamente sus 9 aldeanos\n");
                         server_send_message(

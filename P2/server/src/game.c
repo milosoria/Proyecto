@@ -31,25 +31,25 @@ void log_all(char *message, int pkg_id, PlayersInfo *players_info) {
 }
 
 int play(int player, char *payload, PlayersInfo * players_info) {
-    if (strcmp(payload, "1") > 0) {
+    if (strcmp(payload, "1")== 0) {
         log_info(player, players_info);
         return 1;
-    } else if (strcmp(payload, "2") > 0) {
+    } else if (strcmp(payload, "2") == 0) {
         create_villager(player, players_info);
         return 2;
-    } else if (strcmp(payload, "3") > 0) {
+    } else if (strcmp(payload, "3") == 0) {
         level_up(player, players_info);
         return 3;
-    } else if (strcmp(payload, "4") > 0) {
+    } else if (strcmp(payload, "4") == 0) {
         attack(player, players_info);
         return 4;
-    } else if (strcmp(payload, "5") > 0) {
+    } else if (strcmp(payload, "5") == 0) {
         spy(player, players_info);
         return 5;
-    } else if (strcmp(payload, "6") > 0) {
+    } else if (strcmp(payload, "6") == 0) {
         steal(player, players_info);
         return 6;
-    } else if (strcmp(payload, "7") > 0) {
+    } else if (strcmp(payload, "7") == 0) {
         surrender(player, players_info);
         return 7;
     } else {
@@ -58,7 +58,7 @@ int play(int player, char *payload, PlayersInfo * players_info) {
     }
 }
 void log_info(int player, PlayersInfo * players_info) { 
-    char * message;
+    char * message; // = recursos, niveles, etc COMPLETAR
     log_all(message,1,players_info);
     return;
 }
