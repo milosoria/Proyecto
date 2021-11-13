@@ -14,15 +14,15 @@ int server_receive_id(int client_socket) {
 char *server_receive_payload(int client_socket) {
     // Se obtiene el largo del payload
     int len = 0;
-    recv(client_socket, &len, 1, 0);
+    int recieved = recv(client_socket, &len, 1, 0);
 
-    if (!len) {
+    if (!len || recieved < 1) {
         return NULL;
     } else {
         // Se obtiene el payload
         char *payload = calloc(len,sizeof(char));
         int received = recv(client_socket, payload, len, 0);
-        if (received == 0) return NULL;
+        if (received <1) return NULL;
         // Se retorna
         return payload;
     }

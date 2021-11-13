@@ -42,8 +42,8 @@ int main(int argc, char *argv[]) {
 
         // nivel aldeanos (3) y ataque,defensa
         players_info->levels[i] = calloc(6, sizeof(int));
+        for (int j=0;j<6;j++) players_info->levels[i][j]=1;
         // inicializamos todos los niveles en 1
-        memset(players_info->levels[i], 1, 4);
         // inicializamos los recursos en 0
         players_info->resources[i] = calloc(3, sizeof(int));
     }

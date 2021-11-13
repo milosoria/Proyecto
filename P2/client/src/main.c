@@ -49,7 +49,6 @@ int main(int argc, char *argv[]) {
             char * message = client_receive_payload(server_socket);
             printf("%s", message);
             free(message);
-
         } else if(pkg_id == 2){
             // stdin
             printf("Ingrese su Nombre: ");
@@ -61,36 +60,39 @@ int main(int argc, char *argv[]) {
             printf("Ingrese la distribucion de los 9 aldeanos iniciales:\n\n");
             printf("Cuantos aldeanos quieres de agricultores?: ");
             response[0] = getchar();
-            printf("AGRI: %c\n",response[0]);
             getchar();
             printf("\n");
             printf("Cuantos aldeanos quieres de mineros?: ");
             response[1] = getchar();
-            printf("MIN: %c\n",response[1]);
-            getc(stdin);
+            getchar();
             printf("\n");
             printf("Cuantos aldeanos quieres de ingenieros?: ");
             response[2] = getchar();
-            printf("ING: %c\n",response[2]);
             getchar();
             printf("\n");
             printf("Cuantos aldeanos quieres de guerreros?: ");
             response[3] = getchar();
-            printf("GUER: %c\n",response[3]);
             getchar();
             printf("\n");
             response[4] = '\0';
             int option = 2;
             client_send_message(server_socket, option, response);
         } else if (pkg_id==4){
+            char * message = client_receive_payload(server_socket);
+            printf("%s",message);
             printf("Ingrese su Jugada: ");
-            char response[1] = {getchar() - '0'};
+            char response[1];
+            scanf("%s",response);
+            response[strcspn(response, "\n")] = 0;
+            printf("response %s\n",response);
             int option = 1;
             client_send_message(server_socket, option, response);
         } else if (pkg_id == 5){
-            printf("Desea iniciar la partida?: ");
-            char response[1] = {getchar() - '0'};
+            printf("Desea iniciar la partida? Ingrese 1 cuando este listo: ");
+            char enter;
+            scanf("%s",&enter);
             printf("\n");
+            char response[1]="1";
             int option = 0;
             client_send_message(server_socket, option, response);
         }
