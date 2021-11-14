@@ -1,3 +1,3 @@
 #!/bin/bash
 make
-./server -i 0.0.0.0 -p 8080
+sudo valgrind --leak-check=full ./server -i 0.0.0.0 -p 8080

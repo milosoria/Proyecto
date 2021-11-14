@@ -116,7 +116,6 @@ void create_villager(int player, PlayersInfo * players_info) {
   int id = server_receive_id(players_info->sockets[player]);
   char *payload = server_receive_payload(players_info->sockets[player]);
 
-  printf("el mensaje recibido es:%s, con ID:%i\n", payload, id);
 }
 void level_up(int player, PlayersInfo* players_info) {
   //insertar logica;
