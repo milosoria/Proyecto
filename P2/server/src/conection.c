@@ -14,10 +14,10 @@
 // https://www.man7.org/linux/man-pages/man2/bind.2.html
 // https://www.man7.org/linux/man-pages/man2/accept.2.html
 
-char * alloc_for_string(char * string,char* src){
-    int len = strlen(string) +1;
-    char * buffer = calloc(len,sizeof(string));
-    sprintf(buffer,string,src);
+char *alloc_for_string(char *string, char *src) {
+    int len = strlen(string) + 1;
+    char *buffer = calloc(len, sizeof(string));
+    sprintf(buffer, string, src);
     return buffer;
 }
 
@@ -53,8 +53,7 @@ PlayersInfo *prepare_sockets_and_get_clients(char *IP, int port) {
     server_addr.sin_port = htons(port);
 
     // Se le asigna al socket del servidor un puerto y una IP donde escuchar
-    if (bind(server_socket, (SA *)&server_addr,
-                sizeof(server_addr)) < 0) {
+    if (bind(server_socket, (SA *)&server_addr, sizeof(server_addr)) < 0) {
         printf("Binding failed! Error: %s\n", strerror(errno));
         exit(EXIT_FAILURE);
     }
@@ -79,16 +78,15 @@ PlayersInfo *prepare_sockets_and_get_clients(char *IP, int port) {
     // clientes.
     PlayersInfo *players_info = malloc(sizeof(PlayersInfo));
     // es necesario liberar el sockets_clients
-    *players_info = (PlayersInfo){
-        .n_players = 0,
+    *players_info = (PlayersInfo){.n_players = 0,
         .sockets = {0},
         .server_socket = server_socket,
         .names = calloc(4, sizeof(char *)),
         .villagers = calloc(4, sizeof(int *))};
 
     char *buffer;
-    int names_count=0, villagers_count=0, advised = 0;
-    char * to_send;
+    int names_count = 0, villagers_count = 0, advised = 0;
+    char *to_send;
 
     int id, to_read, cli_sock;
     fd_set read_set;
@@ -99,8 +97,9 @@ PlayersInfo *prepare_sockets_and_get_clients(char *IP, int port) {
     while (1) {
 
         if (villagers_count == players_info->n_players &&
-                names_count == players_info->n_players && !advised && players_info->n_players>1) {
-                   server_send_message(
+                names_count == players_info->n_players && !advised &&
+                players_info->n_players > 1) {
+            server_send_message(
                     players_info->sockets[0], 5,
                     "Por favor empezar el juego, tod@s l@s jugadores esperan\n");
             advised = 1;
@@ -129,7 +128,9 @@ PlayersInfo *prepare_sockets_and_get_clients(char *IP, int port) {
         }
 
         if (FD_ISSET(server_socket, &read_set)) {
-            cli_sock = accept(server_socket, (SA *)&clients_addrs[players_info->n_players], &addr_size);
+            cli_sock =
+                accept(server_socket, (SA *)&clients_addrs[players_info->n_players],
+                        &addr_size);
             if (cli_sock < 0) {
                 printf("accept error! %s\n", strerror(errno));
                 exit(EXIT_FAILURE);
@@ -163,11 +164,12 @@ PlayersInfo *prepare_sockets_and_get_clients(char *IP, int port) {
                     }
                     // a todos los jugadores les pedimos su nombre y que distribuyan a sus
                     // aldeanos
-                    server_send_message(players_info->sockets[player], 2, "Debes enviar tu nombre de jugador\n");
+                    server_send_message(players_info->sockets[player], 2,
+                            "Debes enviar tu nombre de jugador\n");
                     server_send_message(
                             players_info->sockets[player], 3,
                             "Tienes 9 aldeanos iniciales, como deseas distribuirlos?\n\n");
-                    FD_SET(cli_sock,&read_set);
+                    FD_SET(cli_sock, &read_set);
                     break;
                 }
             }
@@ -181,37 +183,40 @@ PlayersInfo *prepare_sockets_and_get_clients(char *IP, int port) {
                 id = server_receive_id(cli_sock);
                 buffer = server_receive_payload(cli_sock);
                 if (id == -1 || buffer == NULL) {
-                    printf("Player %i has disconnected\n",players_info->sockets[player]);
-                    FD_CLR(cli_sock,&read_set);
+                    printf("Player %i has disconnected\n", players_info->sockets[player]);
+                    FD_CLR(cli_sock, &read_set);
                     players_info->sockets[player] = 0;
                     players_info->n_players--;
-                    if (buffer) free(buffer);
+                    if (buffer)
+                        free(buffer);
                     break;
                 }
-                int len = strlen(buffer)+1;
-                printf("ID: %i\n", id );
-                printf("mensaje:%s\n", buffer );
+                int len = strlen(buffer) + 1;
                 // es necesario liberar el buffer despues
                 if (id == 1) {
                     // hay que liberarlo despues
-                    players_info->names[player] = calloc(len,sizeof(char));
-                    memcpy(players_info->names[player], buffer,len);
-                    to_send = alloc_for_string( "Se ha conectado un nuevo jugador con nombre %s\n",buffer);
+                    players_info->names[player] = calloc(len, sizeof(char));
+                    memcpy(players_info->names[player], buffer, len);
+                    to_send = alloc_for_string(
+                            "Se ha conectado un nuevo jugador con nombre %s\n", buffer);
                     server_send_message(players_info->sockets[0], 1, to_send);
+                    free(to_send);
                     names_count++;
                 } else if (id == 2) {
                     int count = 0;
                     int *roles = calloc(4, sizeof(int));
-                    for (int i=0;i<4;i++){
-                        count += (int)(buffer[i]-'0');
-                        roles[i]= (int)(buffer[i]-'0');
+                    for (int i = 0; i < 4; i++) {
+                        count += (int)(buffer[i] - '0');
+                        roles[i] = (int)(buffer[i] - '0');
                     }
                     // repartio correctamente el numero de aldeanos
                     if (count == 9) {
                         players_info->villagers[player] = roles;
                         villagers_count++;
-                        server_send_message(players_info->sockets[player], 1,
-                                "Su distribucion ha sido guardada, comenzara la partida cuando el jugador lider lo indique\n");
+                        server_send_message(
+                                players_info->sockets[player], 1,
+                                "Su distribucion ha sido guardada, comenzara la partida cuando "
+                                "el jugador lider lo indique\n");
                     } else {
                         free(roles);
                         server_send_message(players_info->sockets[player], 1,
@@ -230,6 +235,7 @@ PlayersInfo *prepare_sockets_and_get_clients(char *IP, int port) {
                                 server_send_message(players_info->sockets[k], 0,
                                         "Comienza el juego, PREPARAD@S???\n");
                             }
+                            free(buffer);
                             return players_info;
                         } else {
                             server_send_message(players_info->sockets[0], 1,
@@ -237,7 +243,7 @@ PlayersInfo *prepare_sockets_and_get_clients(char *IP, int port) {
                                     "nombres y distribuir sus aldeanos\n");
                         }
                     }
-                } 
+                }
                 free(buffer);
             }
         }

@@ -102,12 +102,14 @@ int main(int argc, char *argv[]) {
                         players_info->names[player]);
                 log_all(buffer, 1, players_info);
                 free(buffer);
+                free(players_info->names[player]);
                 free(players_info->levels[player]);
                 free(players_info->resources[player]);
                 free(players_info->villagers[player]);
                 players_info->sockets[player] = 0;
                 players_info->n_players--;
                 if (players_info->n_players < 2) {
+                    players_info->n_players++;
                     buffer =
                         alloc_for_string("No hay suficientes jugadores para continuar\n"
                                 "El juego ha terminado :(\n",
@@ -136,6 +138,10 @@ int main(int argc, char *argv[]) {
             }
         }
         close(players_info->server_socket);
+        free(players_info->names);
+        free(players_info->villagers);
+        free(players_info->resources);
+        free(players_info->levels);
         free(players_info);
         return 0;
     goto finish;
