@@ -126,7 +126,7 @@ PlayersInfo *prepare_sockets_and_get_clients(char *IP, int port) {
         to_read = select(max_sock + 1, &read_set, NULL, NULL, NULL);
         if (to_read < 0 && errno != EINTR) {
             printf("select failed: errno = %s\n", strerror(errno));
-        } 
+        }
 
         if (FD_ISSET(server_socket, &read_set)) {
             cli_sock = accept(server_socket, (SA *)&clients_addrs[players_info->n_players], &addr_size);
@@ -181,6 +181,8 @@ PlayersInfo *prepare_sockets_and_get_clients(char *IP, int port) {
                 id = server_receive_id(cli_sock);
                 buffer = server_receive_payload(cli_sock);
                 int len = strlen(buffer)+1;
+                printf("ID: %i\n", id );
+                printf("mensaje:%s\n", buffer );
                 // es necesario liberar el buffer despues
                 if (id == 1) {
                     // hay que liberarlo despues
@@ -227,10 +229,9 @@ PlayersInfo *prepare_sockets_and_get_clients(char *IP, int port) {
                                     "nombres y distribuir sus aldeanos\n");
                         }
                     }
-                }
+                } 
                 free(buffer);
             }
         }
     }
 }
-

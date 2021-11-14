@@ -53,20 +53,90 @@ int play(int player, char *payload, PlayersInfo * players_info) {
         surrender(player, players_info);
         return 7;
     } else {
-        pass(player, players_info);
+        pass(player, players_info); // NO hay q hacer nada, ya esta lista
         return 8;
     }
 }
-void log_info(int player, PlayersInfo * players_info) { 
-    char * message; // = recursos, niveles, etc COMPLETAR
-    log_all(message,1,players_info);
-    return;
+void log_info(int player, PlayersInfo * players_info) {
+  //CANT DE RECURSOS
+  server_send_message(players_info->sockets[player], 1, "Cantidad de recursos:\n");
+  char *message =alloc_for_string(" -Oro:%i\n", players_info->resources[player][0]);
+  server_send_message(players_info->sockets[player], 1, message);
+  free(message);
+  message =alloc_for_string(" -Comida:%i\n", players_info->resources[player][1]);
+  server_send_message(players_info->sockets[player], 1, message);
+  free(message);
+  message =alloc_for_string(" -Ciencia:%i\n", players_info->resources[player][2]);
+  server_send_message(players_info->sockets[player], 1, message);
+  free(message);
+
+  //ALDEANOS POR rol
+  server_send_message(players_info->sockets[player], 1, "Aldeanos por rol:\n");
+  message =alloc_for_string(" -agricultores:%i\n", players_info->villagers[player][0]);
+  server_send_message(players_info->sockets[player], 1, message);
+  free(message);
+  message =alloc_for_string(" -mineros:%i\n", players_info->villagers[player][1]);
+  server_send_message(players_info->sockets[player], 1, message);
+  free(message);
+  message =alloc_for_string(" -ingenieros:%i\n", players_info->villagers[player][2]);
+  server_send_message(players_info->sockets[player], 1, message);
+  free(message);
+  message =alloc_for_string(" -guerreros:%i\n\n", players_info->villagers[player][3]);
+  server_send_message(players_info->sockets[player], 1, message);
+  free(message);
+
+  //NIVELES ALCANZADOS
+  server_send_message(players_info->sockets[player], 1, "Niveles alcanzados:\n");
+  message =alloc_for_string(" -agricultores:%i\n", players_info->levels[player][0]);
+  server_send_message(players_info->sockets[player], 1, message);
+  free(message);
+  message =alloc_for_string(" -mineros:%i\n", players_info->levels[player][1]);
+  server_send_message(players_info->sockets[player], 1, message);
+  free(message);
+  message =alloc_for_string(" -ingenieros:%i\n", players_info->levels[player][2]);
+  server_send_message(players_info->sockets[player], 1, message);
+  free(message);
+  message =alloc_for_string(" -guerreros:%i\n", players_info->levels[player][3]);
+  server_send_message(players_info->sockets[player], 1, message);
+  free(message);
+  message =alloc_for_string(" -ataque:%i\n", players_info->levels[player][4]);
+  server_send_message(players_info->sockets[player], 1, message);
+  free(message);
+  message =alloc_for_string(" -defensa:%i\n", players_info->levels[player][5]);
+  server_send_message(players_info->sockets[player], 1, message);
+  free(message);
+
+  server_send_message(players_info->sockets[player], 1, "#########################\n");
+
 }
 
-void create_villager(int player, PlayersInfo * players_info) { return; }
-void level_up(int player, PlayersInfo* players_info) { return; }
-void attack(int player, PlayersInfo * players_info) { return; }
-void spy(int player, PlayersInfo * players_info) { return; }
-void steal(int player, PlayersInfo * players_info) { return; }
-void surrender(int player, PlayersInfo * players_info) { return; }
-void pass(int player, PlayersInfo * players_info) { return; }
+void create_villager(int player, PlayersInfo * players_info) {
+  //insertar logica;
+  server_send_message(players_info->sockets[player], 6, "# Ingrese la cantidad de aldeanos a agregar por rol:\n\n" );
+  int id = server_receive_id(players_info->sockets[player]);
+  char *payload = server_receive_payload(players_info->sockets[player]);
+
+  printf("el mensaje recibido es:%s, con ID:%i\n", payload, id);
+}
+void level_up(int player, PlayersInfo* players_info) {
+  //insertar logica;
+}
+void attack(int player, PlayersInfo * players_info) {
+  //insertar logica;
+}
+void spy(int player, PlayersInfo * players_info) {
+  //insertar logica;
+}
+void steal(int player, PlayersInfo * players_info) {
+  //insertar logica;
+}
+void surrender(int player, PlayersInfo * players_info) {
+  //insertar logica;
+
+  server_send_message(players_info->sockets[player], 1,
+    "Te has rendido.\n#########################\n");
+}
+void pass(int player, PlayersInfo * players_info) {
+  server_send_message(players_info->sockets[player], 1,
+    "Has pasado.\n#########################\n");
+}

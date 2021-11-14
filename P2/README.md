@@ -24,7 +24,7 @@ Durante su turno, cada jugador podra gastar sus recursos para crear nuevos aldea
 
 ### Realizar Acciones
 Luego de obtener recursos, un jugador puede realizar tantas acciones como quiera hasta pasar de turno. Las acciones posibles son:
-- [ ] Mostrar informacion: cantidad de cada recurso, cantidad de aldeanos en cada rol, nivel de agricultores, mineros,ingenieros,ataque y defensa
+- [x] Mostrar informacion: cantidad de cada recurso, cantidad de aldeanos en cada rol, nivel de agricultores, mineros,ingenieros,ataque y defensa
 - [ ] Crear aldeano: gastar comida y oro para crear nuevos aldeanos, lo cual dependera del rol a asignar (comprobar que los recursos son suficientes)
 - [ ] Subir de nivel: todos los roles tienen asociado un nivel (los guerreros ataque y defensa)
     - Nivel agricultores,mineros,ingenieros
@@ -43,7 +43,7 @@ Luego de obtener recursos, un jugador puede realizar tantas acciones como quiera
 - [ ] Espiar: Se podra espiar una al de enemiga para conocer el estado de su ejercito (cantidad de guerreros, nivel de ataque y defensa). Con un costo de 30 de oro y el gasto debe verse reflejado apenas comience la accion
 - [ ] Robar: 10 de ciencia para robar recursos a otros jugadores. Esta accion debe permitir elegir a otro usuario y elegir entre comida y oro. El usuario debera perder el 10% del recurso seleccionado y el usuario que roba, obtendra esa cantidad
 
-- [ ] Pasar: Terminar el turno actual
+- [x] Pasar: Terminar el turno actual
 - [ ] Rendirse: Queda a nuestro criterio si se desconecta o queda como espectador
 
 ## Interfaz por consola
@@ -83,7 +83,7 @@ Primer argumento ip del servidor y segundo el puerto en escucha:
 ### Cliente
 - ID:0 Iniciar juego (proveniente del jugador jefe)
 - ID:1 Nombre
-- ID:2 Distribucion de aldeanos iniciales 
+- ID:2 Distribucion de aldeanos iniciales
 - ID:3 Jugada
 - ID:4 Jugada Opciones
 ## Principales Funciones y Decisiones de Diseño

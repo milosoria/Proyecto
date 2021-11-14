@@ -95,7 +95,34 @@ int main(int argc, char *argv[]) {
             char response[1]="1";
             int option = 0;
             client_send_message(server_socket, option, response);
+        }else if (pkg_id == 6){
+          char *response = calloc(5,sizeof(char));
+          char * algo= client_receive_payload(server_socket);
+          printf("%s\n",algo );
+
+          //printf("Ingrese la cantidad de aldeanos a agregar por rol:\n\n");
+          printf("N° agricultores nuevos?: ");
+          response[0] = getchar();
+          getchar();
+          printf("\n");
+          printf("N° mineros nuevos?: ");
+          response[1] = getchar();
+          getchar();
+          printf("\n");
+          printf("N° ingenieros nuevos?: ");
+          response[2] = getchar();
+          getchar();
+          printf("\n");
+          printf("N° guerreros nuevos?: ");
+          response[3] = getchar();
+          getchar();
+          printf("\n");
+          response[4] = '\0';
+          int option = 5;
+          printf("%s\n",response );
+          client_send_message(server_socket, option, response);
         }
+
     }
 
     // Se cierra el socket
