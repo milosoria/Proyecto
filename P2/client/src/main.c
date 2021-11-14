@@ -44,9 +44,19 @@ int main(int argc, char *argv[]) {
     int pkg_id;
     while (1) {
         pkg_id = client_receive_id(server_socket);
+        if (pkg_id == -1){
+            printf("Conexion con el servidor se ha perdido\n");
+            printf("Procedemos a terminar el programa\n");
+            goto finish;
+        }
 
         if (pkg_id == 1) { // Recibimos un mensaje del servidor
             char * message = client_receive_payload(server_socket);
+            if (message == NULL){
+                printf("Conexion con el servidor se ha perdido\n");
+                printf("Procedemos a terminar el programa\n");
+                goto finish;
+            }
             printf("%s", message);
             free(message);
         } else if(pkg_id == 2){
@@ -55,8 +65,9 @@ int main(int argc, char *argv[]) {
             char *response = get_input();
             int option = 1;
             client_send_message(server_socket, option, response);
+            free(response);
         } else if (pkg_id ==3){
-            char *response = calloc(5,sizeof(char));
+            char response[5];
             printf("Ingrese la distribucion de los 9 aldeanos iniciales:\n\n");
             printf("Cuantos aldeanos quieres de agricultores?: ");
             response[0] = getchar();
@@ -79,14 +90,19 @@ int main(int argc, char *argv[]) {
             client_send_message(server_socket, option, response);
         } else if (pkg_id==4){
             char * message = client_receive_payload(server_socket);
+            if (message == NULL){
+                printf("Conexion con el servidor se ha perdido\n");
+                printf("Procedemos a terminar el programa\n");
+                goto finish;
+            }
             printf("%s",message);
             printf("Ingrese su Jugada: ");
             char response[1];
             scanf("%s",response);
             response[strcspn(response, "\n")] = 0;
-            printf("response %s\n",response);
             int option = 1;
             client_send_message(server_socket, option, response);
+            free(message);
         } else if (pkg_id == 5){
             printf("Desea iniciar la partida? Ingrese 1 cuando este listo: ");
             char enter;
@@ -98,8 +114,10 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    // Se cierra el socket
-    close(server_socket);
-    free(IP);
-    return 0;
+    finish:
+        // Se cierra el socket
+        close(server_socket);
+        return 0;
+
+    goto finish;
 }

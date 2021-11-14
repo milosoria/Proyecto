@@ -180,6 +180,14 @@ PlayersInfo *prepare_sockets_and_get_clients(char *IP, int port) {
                 // recibimos mensaje
                 id = server_receive_id(cli_sock);
                 buffer = server_receive_payload(cli_sock);
+                if (id == -1 || buffer == NULL) {
+                    printf("Player %i has disconnected\n",players_info->sockets[player]);
+                    FD_CLR(cli_sock,&read_set);
+                    players_info->sockets[player] = 0;
+                    players_info->n_players--;
+                    if (buffer) free(buffer);
+                    break;
+                }
                 int len = strlen(buffer)+1;
                 // es necesario liberar el buffer despues
                 if (id == 1) {
