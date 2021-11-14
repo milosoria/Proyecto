@@ -113,27 +113,39 @@ int main(int argc, char *argv[]) {
             client_send_message(server_socket, option, response);
         }else if (pkg_id == 6){
           char *response = calloc(5,sizeof(char));
+          char *response_input;
           char * algo= client_receive_payload(server_socket);
           printf("%s\n",algo );
 
           //printf("Ingrese la cantidad de aldeanos a agregar por rol:\n\n");
           printf("N° agricultores nuevos?: ");
-          response[0] = getchar();
-          getchar();
+          response_input = get_input();
+          response[0] = response_input[0];
+          free(response_input[0]);
+
           printf("\n");
           printf("N° mineros nuevos?: ");
-          response[1] = getchar();
-          getchar();
+          response_input = get_input();
+          response[1] = response_input[0];
+          free(response_input[0]);
+
           printf("\n");
           printf("N° ingenieros nuevos?: ");
-          response[2] = getchar();
-          getchar();
+          response_input = get_input();
+          response[2] = response_input[0];
+          free(response_input[0]);
+
           printf("\n");
           printf("N° guerreros nuevos?: ");
-          response[3] = getchar();
-          getchar();
+          response_input = get_input();
+          response[3] = response_input[0];
+          free(response_input[0]);
+
           printf("\n");
-          response[4] = '\0';
+
+          response[4] = '\0'; // null terminate
+
+
           int option = 5;
           printf("%s\n",response );
           client_send_message(server_socket, option, response);
