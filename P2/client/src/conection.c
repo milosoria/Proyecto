@@ -14,12 +14,17 @@ int prepare_socket(char * IP, int PORT){
     inet_aton(IP, &server_addr.sin_addr);
     // Se pide una conexión al servidor
     int ret = connect(client_socket, (struct sockaddr*)&server_addr, sizeof(server_addr));
+    if (ret){
+        printf("Intento de conexion fallo, vuelve a intentarlo\n");
+        exit(EXIT_FAILURE);
+    }
     return client_socket;
 }
 
 char * alloc_for_string(char * string,char* src){
     int len = strlen(string) +1;
     char * buffer = calloc(len,sizeof(string));
+    if  (src == NULL) return buffer;
     sprintf(buffer,string,src);
     return buffer;
 }
