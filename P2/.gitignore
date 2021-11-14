@@ -1,8 +1,8 @@
 **
-client/run.sh
-server/run.sh
 server/server
 client/client
+!client/run.sh
+!server/run.sh
 !server/
 !client/
 !server/**
