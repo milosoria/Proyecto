@@ -67,6 +67,7 @@ int main(int argc, char *argv[]) {
             client_send_message(server_socket, option, response);
             free(response);
         } else if (pkg_id ==3){
+            char * algo = client_receive_payload(server_socket);
             char response[5];
             printf("Ingrese la distribucion de los 9 aldeanos iniciales:\n\n");
             printf("Cuantos aldeanos quieres de agricultores?: ");
@@ -104,6 +105,7 @@ int main(int argc, char *argv[]) {
             client_send_message(server_socket, option, response);
             free(message);
         } else if (pkg_id == 5){
+            char * algo= client_receive_payload(server_socket);
             printf("Desea iniciar la partida? Ingrese 1 cuando este listo: ");
             char enter;
             scanf("%s",&enter);
@@ -112,42 +114,30 @@ int main(int argc, char *argv[]) {
             int option = 0;
             client_send_message(server_socket, option, response);
         }else if (pkg_id == 6){
-          char *response = calloc(5,sizeof(char));
-          char *response_input;
           char * algo= client_receive_payload(server_socket);
+          int n;
+          char response[5];
           printf("%s\n",algo );
-
           //printf("Ingrese la cantidad de aldeanos a agregar por rol:\n\n");
           printf("N° agricultores nuevos?: ");
-          response_input = get_input();
-          response[0] = response_input[0];
-          free(response_input[0]);
-
+          scanf("%i",&n);
+          response[0] = n +'0';
           printf("\n");
           printf("N° mineros nuevos?: ");
-          response_input = get_input();
-          response[1] = response_input[0];
-          free(response_input[0]);
-
+          scanf("%i",&n);
+          response[1] = n+'0';
           printf("\n");
           printf("N° ingenieros nuevos?: ");
-          response_input = get_input();
-          response[2] = response_input[0];
-          free(response_input[0]);
-
+          scanf("%i",&n);
+          response[2] = n+'0';
           printf("\n");
           printf("N° guerreros nuevos?: ");
-          response_input = get_input();
-          response[3] = response_input[0];
-          free(response_input[0]);
-
+          scanf("%i",&n);
+          response[3] = n+'0';
           printf("\n");
-
-          response[4] = '\0'; // null terminate
-
-
+          printf("\n");
+          response[4] = '\0';
           int option = 5;
-          printf("%s\n",response );
           client_send_message(server_socket, option, response);
         }
 

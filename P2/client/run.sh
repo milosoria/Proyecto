@@ -1,6 +1,6 @@
 #!/bin/bash
 make
-./client -i 0.0.0.0 -p 8080
+valgrind --leak-check=full ./client -i 0.0.0.0 -p 8080
 # << EOF
 # camilo
 # 0
