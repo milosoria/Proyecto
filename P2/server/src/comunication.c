@@ -7,8 +7,9 @@
 int server_receive_id(int client_socket) {
     // Se obtiene solamente el ID del mensaje
     int id = 0;
-    recv(client_socket, &id, 1, 0);
-    return id;
+    int received = recv(client_socket, &id, 1, 0);
+    if (received) return id;
+    else return -1;
 }
 
 char *server_receive_payload(int client_socket) {
@@ -22,7 +23,7 @@ char *server_receive_payload(int client_socket) {
         // Se obtiene el payload
         char * payload = calloc(len,sizeof(char));
         int received = recv(client_socket, payload, len, 0);
-        if (received <1) return NULL;
+        if (received < 1) return NULL;
         // Se retorna
         return payload;
     }
