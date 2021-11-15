@@ -102,4 +102,4 @@ El programa funciona completamente desde la consola, es decir, el serivdor y cad
 La principal decisión de diseño que implementamos fue que el juego debe jugarse con al menos dos jugadores. Es decir, en un comienzo, el juego no permitirá partir con sólo un jugador, y, si llega a partir con más de uno, si por alguna razón todos los jugadores son eliminados excepto uno (sea por ataques o por rendirse), el programa terminará en el turno siguiente. Por ejemplo, en un juego de dos jugadores, si uno ataca al otro y gana, significa que será el único jugador restante. Es decir, cuando ese jugador termine su turno, el juego se acabará. Esta decisión se tomó ya que no nos parecia lógico que el juego se jugara de a uno, ya que muchas de las acciones por tomar necesitan a otro jugador para interactuar.
 
 ## Bonus
-No se programaron ninguno de los Bunos para esta entrega.
+No se programaron ninguno de los Bonus para esta entrega.
