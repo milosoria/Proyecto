@@ -183,11 +183,11 @@ void attack(int player, PlayersInfo * players_info) {
   printf("Cual es el nombre del jugador?:%s\n",players_info->names[player] );
   printf("player:%i\n",player );
 
-  if (payload != "HaPerdido" && strcmp(payload, players_info->names[player]) != 0){
+  if (strcmp(payload, players_info->names[player]) != 0){
     printf("llego al IF\n" );
     for (int i = 0; i < players_info->n_players; i++ ){
       printf("llego al for\n" );
-      if (strcmp(payload, players_info->names[i]) == 0){
+      if (strcmp(payload, players_info->names[i]) == 0 && players_info->sockets[i] != 0){
         //hasta aqui se asume que se paso un nombre correcto
         int fuerza_atacante = (players_info->villagers[player][3])*(players_info->levels[player][0]); // n_guerreros*nivel_ataque
         int fuerza_defensor = (players_info->villagers[i][3])*(players_info->levels[player][1])*2; //n_guerreros*nivel_defensa
@@ -196,7 +196,7 @@ void attack(int player, PlayersInfo * players_info) {
           for (int j; j < 4; j++){
             players_info->resources[player][j] = players_info->resources[player][j] +players_info->resources[i][j];
             players_info->resources[i][j] = 0;
-            players_info->names[i] = "HaPerdido";
+            //players_info->names[i] = "HaPerdido";
             //La idea es por cada turno hacer jugar a los que no tengan este nombres
             // y prohibir que ataquen a los que lo tengan
             server_send_message(players_info->sockets[player], 1, "Has ganado el ataque\n\0" );
@@ -211,7 +211,7 @@ void attack(int player, PlayersInfo * players_info) {
         }
       } else {
         printf("no se ha encontrado aun, %s -- %s\n",payload,  players_info->names[i]);
-        server_send_message(players_info->sockets[player], 1, "No puedes atacar a este jugador, por que no se encuentra (no existe).\n\0" );
+        server_send_message(players_info->sockets[player], 1, "No puedes atacar a este jugador, no existe o ya ha perdido.\n\0" );
       }
     }
   } else{
@@ -224,6 +224,43 @@ void attack(int player, PlayersInfo * players_info) {
 }
 void spy(int player, PlayersInfo * players_info) {
   //insertar logica;
+  server_send_message(players_info->sockets[player], 8, "Escribe el nombre de quien quieres Espiar?:" );
+  int id = server_receive_id(players_info->sockets[player]);
+  char *payload = server_receive_payload(players_info->sockets[player]);
+  for (int i = 0; i < players_info->n_players; i++ ){
+    printf("llego al for\n" );
+
+    if (strcmp(payload, players_info->names[i]) == 0){
+      //hasta aqui se asume que se paso un nombre correcto
+      int oro_disponible = players_info->resources[player][0];
+
+      if (oro_disponible >= 30){
+        players_info->resources[player][0] = (players_info->resources[player][0]) - 30;
+        server_send_message(players_info->sockets[player], 1, "TOP SECRET:\n");
+        //info nº Guerreros
+        char *message =alloc_for_string(" -guerreros:%i\n\n", players_info->villagers[i][3]);
+        server_send_message(players_info->sockets[player], 1, message);
+        free(message);
+        //ataque
+        message =alloc_for_string(" -nivel de ataque:%i\n", players_info->levels[i][4]);
+        server_send_message(players_info->sockets[player], 1, message);
+        free(message);
+        //defensa
+        message =alloc_for_string(" -nivel de defensa:%i\n", players_info->levels[i][5]);
+        server_send_message(players_info->sockets[player], 1, message);
+        free(message);
+      } else {
+        server_send_message(players_info->sockets[player], 1, "No tienes suficiente dinero.\n\0" );
+
+      }
+
+
+
+    } else {
+      printf("no se ha encontrado aun, %s -- %s\n",payload,  players_info->names[i]);
+      server_send_message(players_info->sockets[player], 1, "Buscando.\n\0" );
+    }
+  }
 }
 void steal(int player, PlayersInfo * players_info) {
   //insertar logica;

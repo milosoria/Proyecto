@@ -25,7 +25,7 @@ Durante su turno, cada jugador podra gastar sus recursos para crear nuevos aldea
 ### Realizar Acciones
 Luego de obtener recursos, un jugador puede realizar tantas acciones como quiera hasta pasar de turno. Las acciones posibles son:
 - [x] Mostrar informacion: cantidad de cada recurso, cantidad de aldeanos en cada rol, nivel de agricultores, mineros,ingenieros,ataque y defensa
-- [ ] Crear aldeano: gastar comida y oro para crear nuevos aldeanos, lo cual dependera del rol a asignar (comprobar que los recursos son suficientes)
+- [x] Crear aldeano: gastar comida y oro para crear nuevos aldeanos, lo cual dependera del rol a asignar (comprobar que los recursos son suficientes)
 - [ ] Subir de nivel: todos los roles tienen asociado un nivel (los guerreros ataque y defensa)
     - Nivel agricultores,mineros,ingenieros
     - Nivel Defensa
@@ -36,7 +36,7 @@ Luego de obtener recursos, un jugador puede realizar tantas acciones como quiera
     - Nivel 4: 30 de comida + 30 de oro + 30 de ciencia
     - Nivel 5: 40 de comida + 40 de oro + 40 de ciencia
 
-- [ ] Atacar: Un usuario puede atacar la aldea de otro. Se compara la fuerza de sus ejercitos:
+- [x] Atacar: Un usuario puede atacar la aldea de otro. Se compara la fuerza de sus ejercitos:
     - Fuerza atacante: cantidad de guerreros X nivel de ataque
     - Fuerza defensor: cantidad de guerreros X nivel de defensa X 2
     Si el atacante gana, obtiene toda la comida,oro y ciencia del defensor. Ademas el defensor es eliminado de la partida. Un jugador eliminado no puede ser atacado y debe ser saltado por el servidor. En caso contrario, el atacante pierde la mitad de sus guerreros (floor)
