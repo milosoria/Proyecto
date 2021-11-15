@@ -64,7 +64,6 @@ int main(int argc, char *argv[]) {
         }
         if (players_info->n_players < 2) {
             server_send_message(players_info->sockets[player], 1, "No hay suficientes jugadores para continuar.\n");
-            free(buffer);
             break;
         }
         // Flujo Turno:
@@ -121,7 +120,7 @@ int main(int argc, char *argv[]) {
                                 "El juego ha terminado :(\n",
                                 NULL);
                     log_all(buffer, 1, players_info);
-                    free(buffer);
+                    free(payload);
                     goto finish;
                 }
                 break;

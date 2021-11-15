@@ -13,14 +13,9 @@ void recollect(int player, PlayersInfo *players_info) {
 
     server_send_message(players_info->sockets[player], 1, buffer);
 
-    players_info->resources[player][0] +=
-        players_info->villagers[player][0] * players_info->levels[player][0] * 2;
-
-    players_info->resources[player][1] +=
-        players_info->villagers[player][1] * players_info->levels[player][1] * 2;
-
-    players_info->resources[player][2] +=
-        players_info->villagers[player][2] * players_info->levels[player][2];
+    players_info->resources[player][0] += incomes[0];
+    players_info->resources[player][1] += incomes[1];
+    players_info->resources[player][2] += incomes[2];
 }
 
 void log_all(char *message, int pkg_id, PlayersInfo *players_info) {
@@ -60,49 +55,49 @@ int play(int player, char *payload, PlayersInfo * players_info) {
 void log_info(int player, PlayersInfo * players_info) {
   //CANT DE RECURSOS
   server_send_message(players_info->sockets[player], 1, "Cantidad de recursos:\n");
-  char *message =alloc_for_string(" -Oro:%i\n", players_info->resources[player][0]);
+  char *message =alloc_for_string("\t-Oro:%i\n", players_info->resources[player][0]);
   server_send_message(players_info->sockets[player], 1, message);
   free(message);
-  message =alloc_for_string(" -Comida:%i\n", players_info->resources[player][1]);
+  message =alloc_for_string("\t-Comida:%i\n", players_info->resources[player][1]);
   server_send_message(players_info->sockets[player], 1, message);
   free(message);
-  message =alloc_for_string(" -Ciencia:%i\n", players_info->resources[player][2]);
+  message =alloc_for_string("\t-Ciencia:%i\n\n", players_info->resources[player][2]);
   server_send_message(players_info->sockets[player], 1, message);
   free(message);
 
   //ALDEANOS POR rol
   server_send_message(players_info->sockets[player], 1, "Aldeanos por rol:\n");
-  message =alloc_for_string(" -agricultores:%i\n", players_info->villagers[player][0]);
+  message =alloc_for_string("\t-agricultores:%i\n", players_info->villagers[player][0]);
   server_send_message(players_info->sockets[player], 1, message);
   free(message);
-  message =alloc_for_string(" -mineros:%i\n", players_info->villagers[player][1]);
+  message =alloc_for_string("\t-mineros:%i\n", players_info->villagers[player][1]);
   server_send_message(players_info->sockets[player], 1, message);
   free(message);
-  message =alloc_for_string(" -ingenieros:%i\n", players_info->villagers[player][2]);
+  message =alloc_for_string("\t-ingenieros:%i\n", players_info->villagers[player][2]);
   server_send_message(players_info->sockets[player], 1, message);
   free(message);
-  message =alloc_for_string(" -guerreros:%i\n\n", players_info->villagers[player][3]);
+  message =alloc_for_string("\t-guerreros:%i\n\n", players_info->villagers[player][3]);
   server_send_message(players_info->sockets[player], 1, message);
   free(message);
 
   //NIVELES ALCANZADOS
   server_send_message(players_info->sockets[player], 1, "Niveles alcanzados:\n");
-  message =alloc_for_string(" -agricultores:%i\n", players_info->levels[player][0]);
+  message =alloc_for_string("\t-agricultores:%i\n", players_info->levels[player][0]);
   server_send_message(players_info->sockets[player], 1, message);
   free(message);
-  message =alloc_for_string(" -mineros:%i\n", players_info->levels[player][1]);
+  message =alloc_for_string("\t-mineros:%i\n", players_info->levels[player][1]);
   server_send_message(players_info->sockets[player], 1, message);
   free(message);
-  message =alloc_for_string(" -ingenieros:%i\n", players_info->levels[player][2]);
+  message =alloc_for_string("\t-ingenieros:%i\n", players_info->levels[player][2]);
   server_send_message(players_info->sockets[player], 1, message);
   free(message);
-  message =alloc_for_string(" -guerreros:%i\n", players_info->levels[player][3]);
+  message =alloc_for_string("\t-guerreros:%i\n", players_info->levels[player][3]);
   server_send_message(players_info->sockets[player], 1, message);
   free(message);
-  message =alloc_for_string(" -ataque:%i\n", players_info->levels[player][4]);
+  message =alloc_for_string("\t-ataque:%i\n", players_info->levels[player][4]);
   server_send_message(players_info->sockets[player], 1, message);
   free(message);
-  message =alloc_for_string(" -defensa:%i\n", players_info->levels[player][5]);
+  message =alloc_for_string("\t-defensa:%i\n\n", players_info->levels[player][5]);
   server_send_message(players_info->sockets[player], 1, message);
   free(message);
 
@@ -115,7 +110,6 @@ void create_villager(int player, PlayersInfo * players_info) {
   server_send_message(players_info->sockets[player], 6, "# Ingrese la cantidad de aldeanos a agregar por rol:\n\n" );
   int id = server_receive_id(players_info->sockets[player]);
   char *payload = server_receive_payload(players_info->sockets[player]);
-  printf("que esta llegando?: %s\n",payload );
   //int count = 0;
   int *roles = calloc(4, sizeof(int));
   for (int i=0;i<4;i++){
@@ -133,6 +127,8 @@ void create_villager(int player, PlayersInfo * players_info) {
           players_info->villagers[player][i] = players_info->villagers[player][i] + n_aldeanos;
         } else {
           server_send_message(players_info->sockets[player], 1, "No tienes suficiente material para hacer aldeanos\n");
+          free(payload);
+          return;
         }
       } else {
         // si es mineros, ing o guerreros
@@ -161,14 +157,16 @@ void create_villager(int player, PlayersInfo * players_info) {
           players_info->villagers[player][i] = players_info->villagers[player][i] + n_aldeanos;
         } else {
           server_send_message(players_info->sockets[player], 1, "No tienes suficiente material para hacer aldeanos\n");
+          free(payload);
+          return;
         }
 
     }//
-
   }
   //players_info->villagers[player] += roles;
   printf("agricultores: %i\n mineros:%i\n",players_info->villagers[player][0], players_info->villagers[player][1] );
   server_send_message(players_info->sockets[player], 1,"Se han agregado tus aldeanos\n");
+  free(payload);
 }
 
 void level_up(int player, PlayersInfo* players_info) { 
@@ -254,10 +252,11 @@ void attack(int player, PlayersInfo * players_info) {
         server_send_message(players_info->sockets[player], 1, "No puedes atacar a este jugador, no existe o ya ha perdido.\n\0" );
       }
     }
-  } else{
+  } else {
     printf("No puedes atacar por que el jugador ya perdio, o eres tu\n");
     server_send_message(players_info->sockets[player], 1, "No puedes atacar a este jugador, por que el jugador ya perdio, o eres tu\n\0" );
     }
+  free(payload);
 }
 
 
@@ -277,15 +276,15 @@ void spy(int player, PlayersInfo * players_info) {
         players_info->resources[player][0] = (players_info->resources[player][0]) - 30;
         server_send_message(players_info->sockets[player], 1, "TOP SECRET:\n");
         //info nº Guerreros
-        char *message =alloc_for_string(" -guerreros:%i\n\n", players_info->villagers[i][3]);
+        char *message =alloc_for_string("\t-guerreros:%i\n\n", players_info->villagers[i][3]);
         server_send_message(players_info->sockets[player], 1, message);
         free(message);
         //ataque
-        message =alloc_for_string(" -nivel de ataque:%i\n", players_info->levels[i][4]);
+        message =alloc_for_string("\t-nivel de ataque:%i\n", players_info->levels[i][4]);
         server_send_message(players_info->sockets[player], 1, message);
         free(message);
         //defensa
-        message =alloc_for_string(" -nivel de defensa:%i\n", players_info->levels[i][5]);
+        message =alloc_for_string("\t-nivel de defensa:%i\n", players_info->levels[i][5]);
         server_send_message(players_info->sockets[player], 1, message);
         free(message);
       } else {
@@ -296,12 +295,14 @@ void spy(int player, PlayersInfo * players_info) {
       server_send_message(players_info->sockets[player], 1, "Buscando.\n\0" );
     }
   }
+  free(payload);
 }
 
 void steal(int player, PlayersInfo * players_info) {
   char buffer[512];
   int id;
   int payload;
+  char* payload_char;
   int condicion = 1;
   while (condicion) {
     int count = 0;
@@ -334,7 +335,9 @@ void steal(int player, PlayersInfo * players_info) {
         sprintf(buffer, "(1) Comida.\n(2) Oro.\n(3) Regresar.\n");
         server_send_message(players_info->sockets[player], 11, buffer);
         id = server_receive_id(players_info->sockets[player]);
-        payload = atoi(server_receive_payload(players_info->sockets[player]));
+        payload_char = server_receive_payload(players_info->sockets[player]);
+        payload = atoi(payload_char);
+        free(payload_char);
         if (payload > 0 && payload < 3){
           if (players_info->resources[player][2] >= 10){
             players_info->resources[player][2] -= 10;
