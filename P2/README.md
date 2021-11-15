@@ -17,16 +17,16 @@ Para poder crear soldados y crecer la aldea, el jugador debe conseguir y gastar 
 
 ### Roles
 Durante su turno, cada jugador podra gastar sus recursos para crear nuevos aldeanos. Cada aldeano creado debe tener un rol. El costo de producir cada aldeano y sus caracteristicas son las siguientes:
-- [ ] Agricultores: costo creacion 10 de comida
-- [ ] Mineros: costo de creacion 10 de comida y 5 de oro
-- [ ] Ingenieros: costo de creacion 20 de comida y 10 de oro
-- [ ] Guerreros: defienden o atacan aldeas, costo de creacion 10 de comida y 10 de oro
+- [x] Agricultores: costo creacion 10 de comida
+- [x] Mineros: costo de creacion 10 de comida y 5 de oro
+- [x] Ingenieros: costo de creacion 20 de comida y 10 de oro
+- [x] Guerreros: defienden o atacan aldeas, costo de creacion 10 de comida y 10 de oro
 
 ### Realizar Acciones
 Luego de obtener recursos, un jugador puede realizar tantas acciones como quiera hasta pasar de turno. Las acciones posibles son:
 - [x] Mostrar informacion: cantidad de cada recurso, cantidad de aldeanos en cada rol, nivel de agricultores, mineros,ingenieros,ataque y defensa
-- [ ] Crear aldeano: gastar comida y oro para crear nuevos aldeanos, lo cual dependera del rol a asignar (comprobar que los recursos son suficientes)
-- [ ] Subir de nivel: todos los roles tienen asociado un nivel (los guerreros ataque y defensa)
+- [x] Crear aldeano: gastar comida y oro para crear nuevos aldeanos, lo cual dependera del rol a asignar (comprobar que los recursos son suficientes)
+- [x] Subir de nivel: todos los roles tienen asociado un nivel (los guerreros ataque y defensa)
     - Nivel agricultores,mineros,ingenieros
     - Nivel Defensa
     - Nivel Ataque
@@ -36,15 +36,15 @@ Luego de obtener recursos, un jugador puede realizar tantas acciones como quiera
     - Nivel 4: 30 de comida + 30 de oro + 30 de ciencia
     - Nivel 5: 40 de comida + 40 de oro + 40 de ciencia
 
-- [ ] Atacar: Un usuario puede atacar la aldea de otro. Se compara la fuerza de sus ejercitos:
+- [x] Atacar: Un usuario puede atacar la aldea de otro. Se compara la fuerza de sus ejercitos:
     - Fuerza atacante: cantidad de guerreros X nivel de ataque
     - Fuerza defensor: cantidad de guerreros X nivel de defensa X 2
     Si el atacante gana, obtiene toda la comida,oro y ciencia del defensor. Ademas el defensor es eliminado de la partida. Un jugador eliminado no puede ser atacado y debe ser saltado por el servidor. En caso contrario, el atacante pierde la mitad de sus guerreros (floor)
-- [ ] Espiar: Se podra espiar una al de enemiga para conocer el estado de su ejercito (cantidad de guerreros, nivel de ataque y defensa). Con un costo de 30 de oro y el gasto debe verse reflejado apenas comience la accion
-- [ ] Robar: 10 de ciencia para robar recursos a otros jugadores. Esta accion debe permitir elegir a otro usuario y elegir entre comida y oro. El usuario debera perder el 10% del recurso seleccionado y el usuario que roba, obtendra esa cantidad
+- [x] Espiar: Se podra espiar una al de enemiga para conocer el estado de su ejercito (cantidad de guerreros, nivel de ataque y defensa). Con un costo de 30 de oro y el gasto debe verse reflejado apenas comience la accion
+- [x] Robar: 10 de ciencia para robar recursos a otros jugadores. Esta accion debe permitir elegir a otro usuario y elegir entre comida y oro. El usuario debera perder el 10% del recurso seleccionado y el usuario que roba, obtendra esa cantidad
 
 - [x] Pasar: Terminar el turno actual
-- [ ] Rendirse: Queda a nuestro criterio si se desconecta o queda como espectador
+- [x] Rendirse: Queda a nuestro criterio si se desconecta o queda como espectador
 
 ## Interfaz por consola
 En cada turno se deben imprimir los recursos y una lista de acciones posibles, al igual que en los menus secundarios. Fuera del turno se deben imprimir los mensajes qeu informen sobre el desarrollo del juego (que hace cada jugador en su turno, excepto en el caso de espionaje)
@@ -69,9 +69,11 @@ Primer argumento ip del servidor y segundo el puerto en escucha:
 - Andrés Fauré Ropert 17639875
 - Joaquín Strobl Diez 17637074
 - Juan José Aubele León 18637124
-- Matías Briones 
+- Matías Briones Sánchez 15621340
 
 ## Instrucciones de Ejecucion
+Para ejecutar el programa, se debe primero ejecutar el servidor desde la carpeta 'server', y luego los clientes desde la carpeta 'client'. Luego, todas las instrucciones para usar el programa aparecen en las respectivas consola.
+
 ## Descripcion de Paquetes
 ### Servidor
 - ID:0 Comienzo del juego
@@ -86,4 +88,16 @@ Primer argumento ip del servidor y segundo el puerto en escucha:
 - ID:2 Distribucion de aldeanos iniciales
 - ID:3 Jugada
 - ID:4 Jugada Opciones
+
 ## Principales Funciones y Decisiones de Diseño
+
+### Principales Funciones
+Nuestro directorio de trabajo `P2` incluye dos directorios principales, `client` y `server`. El primero posee las funciones que hacen correr el cliente, y el segundo las que hacen correr el servidor.
+Tanto el servidor como los clientes operan desde un archivo llamado `main.c`, en sus respectivos directorios. Desde el servidor, se definió un `struct` `PlayersInfo` que posee la información de las aldeas de todos los jugadores. Las funciones más usadas fueron las que hacían que la comunicación cliente - servidor funcionara efectivamente, estas son `server_receive_id`, `server_receive_payload` y `server_send_message` para el servidor; y `client_receive_id`, `client_receive_payload` y  `client_send_message` para el cliente. Estas funciones están en un archivo llamado `comunication.c`, dentro de cada respectivo directorio. A su vez, para la operación del juego, se programó una función para cada acción posible, que se encuentran en el los archivos titulados `game.c` dentro del directorio de servidor.
+
+### Decisiones de Diseño
+El programa funciona completamente desde la consola, es decir, el serivdor y cada cliente (por separado) debe inicializarse en consolas distintas. Para la dinámica de turnos, las deciciones se que cada cliente puede tomar se describen en un "menú de opciones". Decidimos que se acaba un turno cuando un jugador decide "Pasar" (es decir, selecciona la opción 8 en el menú de opciones). Lo anterior significa que un jugador puede llevar a cabo una cantidad indeterminada de acciones en un turno (con tal que tenga recursos para hacerlo).
+La principal decisión de diseño que implementamos fue que el juego debe jugarse con al menos dos jugadores. Es decir, en un comienzo, el juego no permitirá partir con sólo un jugador, y, si llega a partir con más de uno, si por alguna razón todos los jugadores son eliminados excepto uno (sea por ataques o por rendirse), el programa terminará en el turno siguiente. Por ejemplo, en un juego de dos jugadores, si uno ataca al otro y gana, significa que será el único jugador restante. Es decir, cuando ese jugador termine su turno, el juego se acabará. Esta decisión se tomó ya que no nos parecia lógico que el juego se jugara de a uno, ya que muchas de las acciones por tomar necesitan a otro jugador para interactuar.
+
+## Bonus
+No se programaron ninguno de los Bunos para esta entrega.
