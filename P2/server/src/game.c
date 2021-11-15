@@ -113,7 +113,7 @@ void create_villager(int player, PlayersInfo * players_info) {
     //int count = 0;
     int *roles = calloc(4, sizeof(int));
     for (int i=0;i<4;i++){
-        // i marca el tipo de aldeano que quertemos hacer
+        // i marca el tipo de aldeano que queremos hacer
 
         int n_aldeanos = (int)(payload[i]-'0'); // cuantos aldeanos de cierto tipo quiere fabricar
         //hay que comprobar que cuenta con el saldo para comprarlo
@@ -126,7 +126,7 @@ void create_villager(int player, PlayersInfo * players_info) {
                 players_info->resources[player][1] = players_info->resources[player][1] - n_aldeanos*10;
                 players_info->villagers[player][i] = players_info->villagers[player][i] + n_aldeanos;
             } else {
-                server_send_message(players_info->sockets[player], 1, "No tienes suficiente material para hacer aldeanos\n");
+                server_send_message(players_info->sockets[player], 1, "No tienes suficiente material para hacer aldeanos.\n");
                 free(payload);
                 return;
             }
@@ -156,7 +156,7 @@ void create_villager(int player, PlayersInfo * players_info) {
                 players_info->resources[player][1] = players_info->resources[player][1] - n_aldeanos*10; // comida
                 players_info->villagers[player][i] = players_info->villagers[player][i] + n_aldeanos;
             } else {
-                server_send_message(players_info->sockets[player], 1, "No tienes suficiente material para hacer aldeanos\n");
+                server_send_message(players_info->sockets[player], 1, "No tienes suficiente material para hacer aldeanos.\n");
                 free(payload);
                 return;
             }
@@ -258,7 +258,6 @@ void attack(int player, PlayersInfo * players_info) {
     }
     free(payload);
 }
-
 
 void spy(int player, PlayersInfo * players_info) {
     //insertar logica;
@@ -385,6 +384,7 @@ void surrender(int player, PlayersInfo * players_info) {
     free(players_info->resources[player]);
     free(players_info->villagers[player]);
 }
+
 void pass(int player, PlayersInfo * players_info) {
     server_send_message(players_info->sockets[player], 1,
             "Has pasado.\n#########################\n");

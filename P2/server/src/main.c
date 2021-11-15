@@ -13,7 +13,7 @@ int main(int argc, char *argv[]) {
         printf("The correct use is ./server -i <ip_address> -p <tcp_port>");
     } else {
         printf("#########################\n");
-        printf("SERVER STARTED!\n");
+        printf("¡SERVER STARTED!\n");
     }
 
     char *IP;
@@ -91,7 +91,7 @@ int main(int argc, char *argv[]) {
         free(buffer);
         while (play_selected != 8 && play_selected != 7) {
             buffer = alloc_for_string("Jugador %s, que deseas hacer en este turno:\n"
-                "(1) Mostrar Informacion \n"
+                "(1) Mostrar Información \n"
                 "(2) Crear Aldeano \n"
                 "(3) Subir de Nivel \n"
                 "(4) Atacar \n"

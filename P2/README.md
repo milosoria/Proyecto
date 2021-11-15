@@ -66,11 +66,11 @@ Primer argumento ip del servidor y segundo el puerto en escucha:
 # Documentacion
 ## Integrantes:
 - Camilo Soria Aranguiz 18207979
--
--
--
--
--
+- Andrés Fauré Ropert 17639875
+- Joaquín Strobl Diez 17637074
+- Juan José Aubele León 18637124
+- Matías Briones 
+
 ## Instrucciones de Ejecucion
 ## Descripcion de Paquetes
 ### Servidor

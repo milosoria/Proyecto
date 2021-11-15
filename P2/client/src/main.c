@@ -44,7 +44,7 @@ int main(int argc, char *argv[]) {
     while (1) {
         pkg_id = client_receive_id(server_socket);
         if (pkg_id == -1){
-            printf("Conexion con el servidor se ha perdido\n");
+            printf("Conexión con el servidor se ha perdido\n");
             printf("Procedemos a terminar el programa\n");
             goto finish;
         }
@@ -52,7 +52,7 @@ int main(int argc, char *argv[]) {
         if (pkg_id == 1) { // Recibimos un mensaje del servidor
             char * message = client_receive_payload(server_socket);
             if (message == NULL){
-                printf("Conexion con el servidor se ha perdido\n");
+                printf("Conexión con el servidor se ha perdido\n");
                 printf("Procedemos a terminar el programa\n");
                 goto finish;
             }
@@ -69,19 +69,19 @@ int main(int argc, char *argv[]) {
             char * algo = client_receive_payload(server_socket);
             char response[5];
             printf("Ingrese la distribucion de los 9 aldeanos iniciales:\n\n");
-            printf("Cuantos aldeanos quieres de agricultores?: ");
+            printf("¿Cuántos aldeanos quieres de agricultores?: ");
             response[0] = getchar();
             getchar();
             printf("\n");
-            printf("Cuantos aldeanos quieres de mineros?: ");
+            printf("¿Cuántos aldeanos quieres de mineros?: ");
             response[1] = getchar();
             getchar();
             printf("\n");
-            printf("Cuantos aldeanos quieres de ingenieros?: ");
+            printf("¿Cuántos aldeanos quieres de ingenieros?: ");
             response[2] = getchar();
             getchar();
             printf("\n");
-            printf("Cuantos aldeanos quieres de guerreros?: ");
+            printf("¿Cuántos aldeanos quieres de guerreros?: ");
             response[3] = getchar();
             getchar();
             printf("\n");
@@ -92,7 +92,7 @@ int main(int argc, char *argv[]) {
         } else if (pkg_id==4){
             char * message = client_receive_payload(server_socket);
             if (message == NULL){
-                printf("Conexion con el servidor se ha perdido\n");
+                printf("Conexión con el servidor se ha perdido\n");
                 printf("Procedemos a terminar el programa\n");
                 goto finish;
             }
@@ -107,7 +107,7 @@ int main(int argc, char *argv[]) {
             free(message);
         } else if (pkg_id == 5){
             char * algo= client_receive_payload(server_socket);
-            printf("Desea iniciar la partida? Ingrese 1 cuando este listo: ");
+            printf("¿Desea iniciar la partida? Ingrese 1 cuando este listo: ");
             char enter;
             scanf("%s",&enter);
             printf("\n");
@@ -121,19 +121,19 @@ int main(int argc, char *argv[]) {
           char response[5];
           printf("%s\n",algo );
           //printf("Ingrese la cantidad de aldeanos a agregar por rol:\n\n");
-          printf("N° agricultores nuevos?: ");
+          printf("¿N° agricultores nuevos?: ");
           scanf("%i",&n);
           response[0] = n +'0';
           printf("\n");
-          printf("N° mineros nuevos?: ");
+          printf("¿N° mineros nuevos?: ");
           scanf("%i",&n);
           response[1] = n+'0';
           printf("\n");
-          printf("N° ingenieros nuevos?: ");
+          printf("¿N° ingenieros nuevos?: ");
           scanf("%i",&n);
           response[2] = n+'0';
           printf("\n");
-          printf("N° guerreros nuevos?: ");
+          printf("¿N° guerreros nuevos?: ");
           scanf("%i",&n);
           response[3] = n+'0';
           printf("\n");
