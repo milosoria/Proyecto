@@ -1,11 +1,11 @@
 # P2 Lunes 15 de Noviembre
 ## Conexion Inicial:
 
-- [ ] *Conexion*: El servidor debera esperar a los jugadores para comenzar. Cuando un jugador se conecte se le debe dar la bienvenida. El primer jugador conectado sera designado el lider del grupo
+- [x] *Conexion*: El servidor debera esperar a los jugadores para comenzar. Cuando un jugador se conecte se le debe dar la bienvenida. El primer jugador conectado sera designado el lider del grupo
 
-- [ ] *Lobby*: Al conectarse todos los jugadores ingresan a un lobby inicial donde se les pedira el nombre y se le pedira que reparta 9 aldeanos en uno de los cuatro roles. El lider del grupo deve ser notificado sobre los nuevos jugadores que ingresen mostrando su nombre
+- [x] *Lobby*: Al conectarse todos los jugadores ingresan a un lobby inicial donde se les pedira el nombre y se le pedira que reparta 9 aldeanos en uno de los cuatro roles. El lider del grupo deve ser notificado sobre los nuevos jugadores que ingresen mostrando su nombre
 
-- [ ] *Inicio Juego*: El lider del grupo sera el unico con la opcion de iniciar el juego. Si el es el unico conectado o si alguno  de los jugadores aun no ingresa nombre o no ha repartido los aldeanos, el juego no podra comenzar y se le notificara al lider del grupo que los jugadores no estan listos
+- [x] *Inicio Juego*: El lider del grupo sera el unico con la opcion de iniciar el juego. Si el es el unico conectado o si alguno  de los jugadores aun no ingresa nombre o no ha repartido los aldeanos, el juego no podra comenzar y se le notificara al lider del grupo que los jugadores no estan listos
 ## Flujo Del Programa:
 Sera por turnos y el turno de cada jugador debe seguir el siguiente orden:
 
@@ -93,10 +93,12 @@ Para ejecutar el programa, se debe primero ejecutar el servidor desde la carpeta
 
 ### Principales Funciones
 Nuestro directorio de trabajo `P2` incluye dos directorios principales, `client` y `server`. El primero posee las funciones que hacen correr el cliente, y el segundo las que hacen correr el servidor.
+
 Tanto el servidor como los clientes operan desde un archivo llamado `main.c`, en sus respectivos directorios. Desde el servidor, se definió un `struct` `PlayersInfo` que posee la información de las aldeas de todos los jugadores. Las funciones más usadas fueron las que hacían que la comunicación cliente - servidor funcionara efectivamente, estas son `server_receive_id`, `server_receive_payload` y `server_send_message` para el servidor; y `client_receive_id`, `client_receive_payload` y  `client_send_message` para el cliente. Estas funciones están en un archivo llamado `comunication.c`, dentro de cada respectivo directorio. A su vez, para la operación del juego, se programó una función para cada acción posible, que se encuentran en el los archivos titulados `game.c` dentro del directorio de servidor.
 
 ### Decisiones de Diseño
 El programa funciona completamente desde la consola, es decir, el serivdor y cada cliente (por separado) debe inicializarse en consolas distintas. Para la dinámica de turnos, las deciciones se que cada cliente puede tomar se describen en un "menú de opciones". Decidimos que se acaba un turno cuando un jugador decide "Pasar" (es decir, selecciona la opción 8 en el menú de opciones). Lo anterior significa que un jugador puede llevar a cabo una cantidad indeterminada de acciones en un turno (con tal que tenga recursos para hacerlo).
+
 La principal decisión de diseño que implementamos fue que el juego debe jugarse con al menos dos jugadores. Es decir, en un comienzo, el juego no permitirá partir con sólo un jugador, y, si llega a partir con más de uno, si por alguna razón todos los jugadores son eliminados excepto uno (sea por ataques o por rendirse), el programa terminará en el turno siguiente. Por ejemplo, en un juego de dos jugadores, si uno ataca al otro y gana, significa que será el único jugador restante. Es decir, cuando ese jugador termine su turno, el juego se acabará. Esta decisión se tomó ya que no nos parecia lógico que el juego se jugara de a uno, ya que muchas de las acciones por tomar necesitan a otro jugador para interactuar.
 
 ## Bonus
