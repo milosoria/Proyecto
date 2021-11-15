@@ -173,6 +173,7 @@ int main(int argc, char *argv[]) {
             response = get_input();
             client_send_message(server_socket, 11, response);
             free(message);
+            free(response);
         } else if (pkg_id == 12){
             char * message = client_receive_payload(server_socket);
             free(message);
