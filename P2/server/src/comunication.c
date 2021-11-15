@@ -23,7 +23,10 @@ char *server_receive_payload(int client_socket) {
         // Se obtiene el payload
         char * payload = calloc(len,sizeof(char));
         int received = recv(client_socket, payload, len, 0);
-        if (received < 1) return NULL;
+        if (received < 1){
+            free(payload);
+            return NULL;
+        } 
         // Se retorna
         return payload;
     }
