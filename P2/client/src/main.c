@@ -139,6 +139,28 @@ int main(int argc, char *argv[]) {
           response[4] = '\0';
           int option = 5;
           client_send_message(server_socket, option, response);
+        } else if(pkg_id == 7){
+            // stdin
+            char * algo= client_receive_payload(server_socket);
+            char cadena[200];
+            char response[5];
+            printf("%s",algo );
+            //printf("Ingrese la cantidad de aldeanos a agregar por rol:\n\n");
+            scanf("%s",cadena );
+            //response[4] = '\0';
+            int option = 5;
+            client_send_message(server_socket, option, cadena);
+        } else if(pkg_id == 8){
+            // stdin
+            char * algo= client_receive_payload(server_socket);
+            char cadena[200];
+            char response[5];
+            printf("%s",algo );
+            //printf("Ingrese la cantidad de aldeanos a agregar por rol:\n\n");
+            scanf("%s",cadena );
+            //response[4] = '\0';
+            int option = 5;
+            client_send_message(server_socket, option, cadena);
         } else if (pkg_id == 11){
             char * message = client_receive_payload(server_socket);
             char * response;
@@ -146,8 +168,11 @@ int main(int argc, char *argv[]) {
             response = get_input();
             client_send_message(server_socket, 11, response);
             free(message);
+        } else if (pkg_id == 12){
+            char * message = client_receive_payload(server_socket);
+            free(message);
+            break;
         }
-
     }
 
     finish:

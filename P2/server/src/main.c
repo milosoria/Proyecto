@@ -55,15 +55,18 @@ int main(int argc, char *argv[]) {
     char *payload;
     // Guardaremos los sockets en un arreglo e iremos alternando a quién escuchar.
     while (1) {
-        if (player == players_info->n_players) {
+        if (player == 4) {
             player = 0;
         }
         if (players_info->sockets[player] == 0){
             player++;
             continue;
         }
-        printf("Jugadores en juego: %d.", players_info->n_players);
-        printf("Turno jugador %d.", player);
+        if (players_info->n_players < 2) {
+            server_send_message(players_info->sockets[player], 1, "No hay suficientes jugadores para continuar.\n");
+            free(buffer);
+            break;
+        }
         // Flujo Turno:
         // 1. Recolectar recursos del jugador turn
         /* * Oro: cantidad de mineros X nivel de mineros X 2 */
