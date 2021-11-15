@@ -115,8 +115,62 @@ void create_villager(int player, PlayersInfo * players_info) {
   server_send_message(players_info->sockets[player], 6, "# Ingrese la cantidad de aldeanos a agregar por rol:\n\n" );
   int id = server_receive_id(players_info->sockets[player]);
   char *payload = server_receive_payload(players_info->sockets[player]);
+  printf("que esta llegando?: %s\n",payload );
+  //int count = 0;
+  int *roles = calloc(4, sizeof(int));
+  for (int i=0;i<4;i++){
+      // i marca el tipo de aldeano que quertemos hacer
 
+      int n_aldeanos = (int)(payload[i]-'0'); // cuantos aldeanos de cierto tipo quiere fabricar
+      //hay que comprobar que cuenta con el saldo para comprarlo
+      int comida;
+      int oro;
+      if (i == 0){
+        // si es agricultor
+        comida = players_info->resources[player][1];
+        if (comida >= n_aldeanos*10){
+          players_info->resources[player][1] = players_info->resources[player][1] - n_aldeanos*10;
+          players_info->villagers[player][i] = players_info->villagers[player][i] + n_aldeanos;
+        } else {
+          server_send_message(players_info->sockets[player], 1, "No tienes suficiente material para hacer aldeanos\n");
+        }
+      } else {
+        // si es mineros, ing o guerreros
+        comida = players_info->resources[player][1];
+        oro = players_info->resources[player][0];
+        if (i == 1 && comida >= n_aldeanos*10 && oro >= n_aldeanos*5){
+          //minero
+          players_info->resources[player][0] = players_info->resources[player][0] - n_aldeanos*5; //oro
+          players_info->villagers[player][i] = players_info->villagers[player][i] + n_aldeanos;
+
+          players_info->resources[player][1] = players_info->resources[player][1] - n_aldeanos*10; // comida
+          players_info->villagers[player][i] = players_info->villagers[player][i] + n_aldeanos;
+        } else if (i == 2 && comida >= n_aldeanos*20 && oro >= n_aldeanos*10){
+          //ingeniero
+          players_info->resources[player][0] = players_info->resources[player][0] - n_aldeanos*10; //oro
+          players_info->villagers[player][i] = players_info->villagers[player][i] + n_aldeanos;
+
+          players_info->resources[player][1] = players_info->resources[player][1] - n_aldeanos*20; // comida
+          players_info->villagers[player][i] = players_info->villagers[player][i] + n_aldeanos;
+        } else if (i == 3 && comida >= n_aldeanos*10 && oro >= n_aldeanos*10){
+          //guerrero
+          players_info->resources[player][0] = players_info->resources[player][0] - n_aldeanos*10; //oro
+          players_info->villagers[player][i] = players_info->villagers[player][i] + n_aldeanos;
+
+          players_info->resources[player][1] = players_info->resources[player][1] - n_aldeanos*10; // comida
+          players_info->villagers[player][i] = players_info->villagers[player][i] + n_aldeanos;
+        } else {
+          server_send_message(players_info->sockets[player], 1, "No tienes suficiente material para hacer aldeanos\n");
+        }
+
+    }//
+
+  }
+  //players_info->villagers[player] += roles;
+  printf("agricultores: %i\n mineros:%i\n",players_info->villagers[player][0], players_info->villagers[player][1] );
+  server_send_message(players_info->sockets[player], 1,"Se han agregado tus aldeanos\n");
 }
+
 void level_up(int player, PlayersInfo* players_info) {
   //insertar logica;
 }
