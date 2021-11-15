@@ -63,6 +63,7 @@ int main(int argc, char *argv[]) {
             continue;
         }
         if (players_info->n_players < 2) {
+            players_info->n_players++;
             server_send_message(players_info->sockets[player], 1, "No hay suficientes jugadores para continuar.\n");
             break;
         }
@@ -109,11 +110,13 @@ int main(int argc, char *argv[]) {
                         players_info->names[player]);
                 log_all(buffer, 1, players_info);
                 free(buffer);
-                free(players_info->names[player]);
-                free(players_info->levels[player]);
-                free(players_info->resources[player]);
-                free(players_info->villagers[player]);
-                players_info->sockets[player] = 0;
+                if (players_info->sockets[player]){
+                    free(players_info->names[player]);
+                    free(players_info->levels[player]);
+                    free(players_info->resources[player]);
+                    free(players_info->villagers[player]);
+                    players_info->sockets[player] = 0;
+                }
                 players_info->n_players--;
                 if (players_info->n_players < 2) {
                     players_info->n_players++;

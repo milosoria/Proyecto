@@ -88,6 +88,7 @@ int main(int argc, char *argv[]) {
             response[4] = '\0';
             int option = 2;
             client_send_message(server_socket, option, response);
+            free(algo);
         } else if (pkg_id==4){
             char * message = client_receive_payload(server_socket);
             if (message == NULL){
@@ -113,6 +114,7 @@ int main(int argc, char *argv[]) {
             char response[1]="1";
             int option = 0;
             client_send_message(server_socket, option, response);
+            free(algo);
         } else if (pkg_id == 6){
           char * algo= client_receive_payload(server_socket);
           int n;
@@ -139,6 +141,7 @@ int main(int argc, char *argv[]) {
           response[4] = '\0';
           int option = 5;
           client_send_message(server_socket, option, response);
+          free(algo);
         } else if(pkg_id == 7){
             // stdin
             char * algo= client_receive_payload(server_socket);
@@ -150,6 +153,7 @@ int main(int argc, char *argv[]) {
             //response[4] = '\0';
             int option = 5;
             client_send_message(server_socket, option, cadena);
+            free(algo);
         } else if(pkg_id == 8){
             // stdin
             char * algo= client_receive_payload(server_socket);
@@ -161,6 +165,7 @@ int main(int argc, char *argv[]) {
             //response[4] = '\0';
             int option = 5;
             client_send_message(server_socket, option, cadena);
+            free(algo);
         } else if (pkg_id == 11){
             char * message = client_receive_payload(server_socket);
             char * response;
