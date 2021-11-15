@@ -3,18 +3,17 @@
 #include <stdio.h>
 #include <unistd.h>
 
-char *get_input() {
-    char *response = calloc(20,sizeof(char));
-    int pos = 0;
-    while (1) {
-        char c = getchar();
-        if (c == '\n')
-            break;
-        response[pos] = c;
-        pos++;
-    }
-    response[pos] = '\0';
-    return response;
+char * get_input(){
+  char * response = calloc(20, sizeof(char));
+  int pos=0;
+  while (1){
+    char c = getchar();
+    if (c == '\n') break;
+    response[pos] = c;
+    pos++;
+  }
+  response[pos] = '\0';
+  return response;
 }
 
 int main(int argc, char *argv[]) {
@@ -31,7 +30,7 @@ int main(int argc, char *argv[]) {
         IP = "0.0.0.0";
     }
     if (strcmp(argv[3], "-p")==0) {
-        PORT = (int)*argv[4];
+        PORT = atoi(argv[4]);
     } else {
         PORT = 8080;
     }
@@ -100,6 +99,7 @@ int main(int argc, char *argv[]) {
             printf("Ingrese su Jugada: ");
             char response[1];
             scanf("%s",response);
+            getchar();
             response[strcspn(response, "\n")] = 0;
             int option = 1;
             client_send_message(server_socket, option, response);
@@ -113,7 +113,7 @@ int main(int argc, char *argv[]) {
             char response[1]="1";
             int option = 0;
             client_send_message(server_socket, option, response);
-        }else if (pkg_id == 6){
+        } else if (pkg_id == 6){
           char * algo= client_receive_payload(server_socket);
           int n;
           char response[5];
@@ -139,6 +139,13 @@ int main(int argc, char *argv[]) {
           response[4] = '\0';
           int option = 5;
           client_send_message(server_socket, option, response);
+        } else if (pkg_id == 11){
+            char * message = client_receive_payload(server_socket);
+            char * response;
+            printf("%s",message);
+            response = get_input();
+            client_send_message(server_socket, 11, response);
+            free(message);
         }
 
     }

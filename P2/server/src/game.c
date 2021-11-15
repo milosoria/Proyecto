@@ -117,8 +117,49 @@ void create_villager(int player, PlayersInfo * players_info) {
   char *payload = server_receive_payload(players_info->sockets[player]);
 
 }
-void level_up(int player, PlayersInfo* players_info) {
-  //insertar logica;
+void level_up(int player, PlayersInfo* players_info) { 
+    char buffer[512];
+    int condicion = 1;
+    while (condicion) {
+        sprintf(buffer, "Ingrese cual aspecto desea mejorar:\n(1) Nivel Agricultores (Nivel %d).\n(2) Nivel Mineros (Nivel %d).\n(3) Nivel Ingenieros (Nivel %d).\n(4) Nivel Ataque (Nivel %d).\n(5) Nivel Defensa (Nivel %d).\n(6) Volver al Menú.\n", players_info->levels[player][0], players_info->levels[player][1], players_info->levels[player][2], players_info->levels[player][3], players_info->levels[player][4]);
+        server_send_message(players_info->sockets[player], 11, buffer);
+        int id = server_receive_id(players_info->sockets[player]);
+        int payload = atoi(server_receive_payload(players_info->sockets[player]));
+        printf("pkg_id: %d.\n", id);
+        printf("payload niveles: %d.\n", payload);
+        if (payload > 0 && payload < 6) {
+            if (players_info->levels[player][payload - 1] == 5) {
+                sprintf(buffer, "Este aspecto ya está mejorado al máximo, no se puede seguir mejorando.\n");
+                server_send_message(players_info->sockets[player], 1, buffer);
+            }
+            else {
+                int costo = (players_info->levels[player][payload - 1]) * 10;
+                int food = players_info->resources[player][0];
+                int gold = players_info->resources[player][1];
+                int science = players_info->resources[player][2];
+                if (food >= costo && gold >= costo && science >= costo) {
+                    players_info->resources[player][0] -= costo;
+                    players_info->resources[player][1] -= costo;
+                    players_info->resources[player][2] -= costo;
+                    players_info->levels[player][payload - 1] += 1;
+                    sprintf(buffer, "Aspecto mejorado al nivel %d con éxito.\n", players_info->levels[player][payload - 1]);
+                    server_send_message(players_info->sockets[player], 1, buffer);
+                }
+                else {
+                    sprintf(buffer, "Recursos insuficientes para mejorar este aspecto.\nNecesitas %d comida, %d oro y %d ciencia. Tienes %d comida, %d oro y %d ciencia.\n", 
+                    costo, costo, costo, food, gold, science);
+                    server_send_message(players_info->sockets[player], 1, buffer);
+                }
+            } 
+        }
+        else if (payload == 6){
+            condicion = 0;
+        }
+        else {
+            sprintf(buffer, "El valor ingresado es inválido, por favor escoja uno valor entre 1 y 6.\n");
+            server_send_message(players_info->sockets[player], 1, buffer);
+        }
+    }
 }
 void attack(int player, PlayersInfo * players_info) {
   //insertar logica;

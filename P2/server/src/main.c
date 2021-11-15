@@ -24,7 +24,7 @@ int main(int argc, char *argv[]) {
         IP = "0.0.0.0";
     }
     if (strcmp(argv[3], "-p") == 0) {
-        PORT = (int)*argv[4];
+        PORT = atoi(argv[4]);
     } else {
         PORT = 8080;
     }
@@ -55,10 +55,15 @@ int main(int argc, char *argv[]) {
     char *payload;
     // Guardaremos los sockets en un arreglo e iremos alternando a quién escuchar.
     while (1) {
-        if (players_info->sockets[player] == 0)
-            continue;
-        if (player == players_info->n_players)
+        if (player == players_info->n_players) {
             player = 0;
+        }
+        if (players_info->sockets[player] == 0){
+            player++;
+            continue;
+        }
+        printf("Jugadores en juego: %d.", players_info->n_players);
+        printf("Turno jugador %d.", player);
         // Flujo Turno:
         // 1. Recolectar recursos del jugador turn
         /* * Oro: cantidad de mineros X nivel de mineros X 2 */
@@ -81,7 +86,8 @@ int main(int argc, char *argv[]) {
 
         log_all(buffer, 1, players_info);
         free(buffer);
-        buffer = alloc_for_string("Jugador %s, que deseas hacer en este turno:\n"
+        while (play_selected != 8 && play_selected != 7) {
+            buffer = alloc_for_string("Jugador %s, que deseas hacer en este turno:\n"
                 "(1) Mostrar Informacion \n"
                 "(2) Crear Aldeano \n"
                 "(3) Subir de Nivel \n"
@@ -92,9 +98,8 @@ int main(int argc, char *argv[]) {
                 "(8) Pasar \n"
                 "#########################\n",
                 players_info->names[player]);
-        server_send_message(players_info->sockets[player], 4, buffer);
-        free(buffer);
-        while (play_selected != 8 || play_selected != 7) {
+            server_send_message(players_info->sockets[player], 4, buffer);
+            free(buffer);
             id = server_receive_id(players_info->sockets[player]);
             payload = server_receive_payload(players_info->sockets[player]);
             if (id == -1 || buffer == NULL) {
@@ -123,6 +128,7 @@ int main(int argc, char *argv[]) {
             // Entregar turno al siguiente jugador activo
         }
         player++;
+        play_selected = 0;
         printf("------------------\n");
     }
     finish:
